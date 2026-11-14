@@ -106,6 +106,7 @@
   .spin{transform-origin:500px 500px;animation:spin 140s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   body.landing .boardwrap{opacity:.35;transform:scale(1.08)}
+  body.landing #bull{opacity:0} #bull{transition:opacity .8s}
   .boardwrap{transition:opacity 1s,transform 1.2s cubic-bezier(.2,.8,.2,1);transform-origin:500px 500px}
 
   .dart{cursor:pointer;transition:transform 1.05s cubic-bezier(.16,1,.3,1),opacity .5s}
@@ -124,7 +125,9 @@
   @keyframes pulse{0%{stroke-width:2;opacity:.9;r:17}100%{stroke-width:1;opacity:0;r:34}}
   .ripple{fill:none;stroke:#fff;stroke-width:2;animation:ripple .9s ease-out forwards;pointer-events:none}
   @keyframes ripple{0%{r:6;opacity:.8}100%{r:46;opacity:0}}
-  .trail{stroke:url(#trailGrad);stroke-width:2;stroke-linecap:round;pointer-events:none;stroke-dasharray:4 5;opacity:0;transition:opacity .25s}
+  .trail{fill:none;stroke:#e9e2cf;stroke-width:1.6;stroke-linecap:round;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 2px 2px #0009)}
+  .trail.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:drawthread .7s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes drawthread{to{stroke-dashoffset:0}}
   .trail.on{opacity:1}
 
   /* headline over board */
@@ -161,7 +164,9 @@
     padding:24px;transition:opacity .6s,transform .8s cubic-bezier(.2,.8,.2,1)}
   body.running #hero{opacity:0;transform:translateY(-30px) scale(.98);pointer-events:none}
   #hero .eyebrow{font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--sun);font-weight:700;margin-bottom:14px}
-  #hero h1{font-size:clamp(34px,5.4vw,64px);line-height:1.03;letter-spacing:-1.8px;margin:0 0 14px;font-weight:800;max-width:900px}
+  #hero h1{margin:0 0 22px;font-weight:300;text-transform:uppercase;line-height:1.15}
+  #hero h1 .l1{display:block;font-size:clamp(15px,1.9vw,24px);letter-spacing:.42em;color:#cfd3e4;margin-bottom:10px;padding-left:.42em}
+  #hero h1 em{display:block;font-size:clamp(48px,9vw,120px);letter-spacing:.22em;padding-left:.22em;font-weight:300}
   #hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--sun),#ff9f6b 40%,var(--insp));-webkit-background-clip:text;background-clip:text;color:transparent}
   #hero p{color:var(--dim);font-size:17px;max-width:620px;margin:0 0 28px}
   .bigsearch{display:flex;gap:8px;width:min(720px,100%);background:rgba(16,18,30,.85);border:1px solid var(--line2);border-radius:16px;padding:8px;
@@ -174,6 +179,15 @@
   .threeup{display:flex;gap:28px;margin-top:38px;color:var(--dim);font-size:13px;flex-wrap:wrap;justify-content:center}
   .threeup b{color:var(--text)}
 
+  #cards{position:absolute;inset:0;z-index:3;pointer-events:none;perspective:1200px;transition:opacity .6s}
+  body.running #cards{opacity:0}
+  .pc{position:absolute;width:210px;padding:12px 14px;border-radius:10px;background:linear-gradient(160deg,rgba(28,31,52,.9),rgba(12,14,24,.9));
+    border:1px solid #2b3150;box-shadow:0 30px 60px #000a;font-size:11.5px;color:var(--dim);opacity:.55;
+    -webkit-box-reflect:below 4px linear-gradient(transparent 70%,rgba(255,255,255,.08));animation:drift 14s ease-in-out infinite alternate}
+  .pc b{display:block;color:var(--text);font-size:14px;margin-bottom:2px} .pc i{font-style:normal;font-size:10px;letter-spacing:1.4px;text-transform:uppercase}
+  .pc q{display:block;margin-top:8px;color:#b8bdd2;font-style:italic}
+  @keyframes drift{from{transform:var(--t) translateY(0)}to{transform:var(--t) translateY(-18px)}}
+  @media (max-width:960px){ #cards{display:none} }
   /* ---------- right panel ---------- */
   .rank{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px;border:1px solid transparent;border-radius:12px;cursor:pointer;transition:background .2s,border-color .2s}
   .rank:hover,.rank.hov{background:rgba(30,34,54,.6);border-color:var(--line)}
@@ -212,8 +226,8 @@
 
   #board,#headline{transition:transform .45s cubic-bezier(.2,.8,.2,1)}
   @media (min-width:961px){
-    body.show-right #board,body.show-right #headline{transform:translateX(-195px)}
-    body.show-left #board,body.show-left #headline{transform:translateX(180px)}
+    body.show-right #board{transform:translateX(-195px)}
+    body.show-left #board{transform:translateX(180px)}
     body.show-left #openLeft,body.show-right #openRight,body.show-left #howto{opacity:0;pointer-events:none}
   }
   /* ---------- responsive ---------- */
@@ -244,7 +258,6 @@
     .spacer{display:none}
   }
   @media (max-width:600px){
-    #hero h1{letter-spacing:-1px}
     .mockbadge{padding:3px 7px;font-size:10px}
     .search{display:none}
     body.running .search{display:none}
@@ -312,9 +325,10 @@
     <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
     <div id="tip"></div>
 
+    <div id="cards" aria-hidden="true"></div>
     <div id="hero">
       <div class="eyebrow">Live-web founder research</div>
-      <h1>Your idea already exists.<br><em>Elsewhere.</em></h1>
+      <h1><span class="l1">Your idea already exists</span><em>Elsewhere</em></h1>
       <p>Somewhere, someone has already solved a version of your problem, often in an industry you'd never think to search. Describe your idea and we'll find them.</p>
       <form class="bigsearch" id="heroForm">
         <input id="idea" aria-label="Describe your idea" placeholder="e.g. an SMS assistant that helps NYC deli owners track daily cash flow" autofocus>
@@ -521,7 +535,7 @@ function hover(id, on){
   document.querySelectorAll(".rank").forEach(r => r.classList.toggle("hov", on && r.dataset.id === id));
   const tip = $("tip");
   if (!on){ tip.classList.remove("on"); return; }
-  const line = el("line", {x1:C, y1:C, x2:u.x, y2:u.y, class:"trail"}, $("trails"));
+  const line = thread(u, "trail");
   requestAnimationFrame(() => line.classList.add("on"));
   const sim = similarity(u);
   tip.innerHTML = `<div class="t">${esc(u.name)}</div><div class="s">${esc(u.one_liner)}</div>
@@ -533,6 +547,11 @@ function hover(id, on){
   if (left + 260 > box.width) left = p.x - box.left - 268;
   tip.style.left = Math.max(8, left) + "px"; tip.style.top = Math.max(8, Math.min(top, box.height - 150)) + "px";
   tip.classList.add("on");
+}
+function thread(u, cls){
+  const mx = (C + u.x) / 2, my = (C + u.y) / 2, len = Math.hypot(u.x - C, u.y - C);
+  const p = el("path", {d:`M${C},${C} Q${mx + (u.y - C) * .18},${my + len * .22} ${u.x},${u.y}`, class:cls}, $("trails"));
+  p.style.setProperty("--len", Math.ceil(len * 1.2)); return p;
 }
 const dna = u => `<span class="dna" title="Gold = same choice as you">${AXES.map(a => `<i class="${(u.divergent_axes || []).includes(a) ? "diff" : ""}"></i>`).join("")}</span>`;
 
@@ -571,7 +590,7 @@ function select(id){
   const u = S.u[id]; if (!u) return;
   Object.values(S.u).forEach(x => x.g.classList.toggle("sel", x.id === id));
   $("trails").querySelectorAll(".keep").forEach(t => t.remove());
-  el("line", {x1:C, y1:C, x2:u.x, y2:u.y, class:"trail on keep"}, $("trails"));
+  thread(u, "trail on keep draw");
   S.selected = id; renderDetail(u); document.body.classList.add("show-right"); $("right").scrollTop = 0;
 }
 function deselect(){
@@ -667,6 +686,13 @@ async function loadDemos(){
   } catch {}
 }
 $("mockbadge").hidden = !CONFIG.USE_MOCK;
+const CARDS = [
+  ["HarvestFlow","Farming","texts farmers ten days before money runs out","8%","14%","rotateY(24deg) rotateZ(-6deg)","var(--insp)"],
+  ["Ledgerly","Same idea · Chicago","text us your sales at closing time","74%","10%","rotateY(-26deg) rotateZ(5deg)","var(--collab)"],
+  ["Steady Gig","Gig work","one number: what's safe to spend today","4%","64%","rotateY(30deg) rotateZ(4deg)","var(--insp)"],
+  ["Shoebox","Shut down · 2025","churn without in-person support","78%","66%","rotateY(-22deg) rotateZ(-7deg)","var(--dead)"],
+];
+$("cards").innerHTML = CARDS.map(([n,k,q,x,y,t,c],i) => `<div class="pc" style="left:${x};top:${y};--t:${t};animation-delay:-${i*3}s"><i style="color:${c}">${k}</i><b>${n}</b><q>${q}</q></div>`).join("");
 drawStars(); reset(); loadDemos();
 </script>
 </body>
