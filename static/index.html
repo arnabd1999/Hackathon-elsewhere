@@ -321,7 +321,7 @@
   #tour button{border:0;background:#1b1b1b;color:var(--text);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;line-height:1}
   #tour button:hover{background:#2a2a2a}
   #tour button.all{width:auto;border-radius:999px;padding:0 12px;font-size:12.5px;margin-left:4px}
-  #tour .prog{position:absolute;left:0;bottom:0;height:2px;background:var(--sun);animation:prog 6.5s linear forwards}
+  #tour .prog{position:absolute;left:0;bottom:0;height:2px;background:var(--sun);animation:prog 3.5s linear forwards}
   @keyframes prog{from{width:0}to{width:100%}}
   @media (min-width:961px){ body.show-right #tour{left:calc(50% - 195px)} }
   body.zoomed[data-view=elsewhere] #seeall{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
@@ -637,7 +637,7 @@ function tourStep(){
   const t = S.tour; if (!t) return;
   select(t.ids[t.i]); renderTour(); clearTimeout(t.timer);
   if (t.auto) t.timer = setTimeout(() => { if (S.tour !== t || !t.auto) return;
-    if (t.i < t.ids.length - 1){ t.i++; tourStep(); } else endTour(true); }, 6500);
+    if (t.i < t.ids.length - 1){ t.i++; tourStep(); } else endTour(true); }, 3500);
 }
 function tourGo(d){ const t = S.tour; if (!t) return; t.auto = false; t.i = (t.i + d + t.ids.length) % t.ids.length; tourStep(); }
 function pauseTour(){ if (S.tour && S.tour.auto){ S.tour.auto = false; clearTimeout(S.tour.timer); renderTour(); } }
