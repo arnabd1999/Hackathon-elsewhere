@@ -21,7 +21,7 @@ Your idea probably already exists, executed a little differently: another countr
 | 3. Read | Top pages from different domains, crawled live | **Contents** `POST ydc-index.io/v1/contents` |
 | 4. Extract + verify | LLM pulls out companies, their execution and a verbatim quote. **Code** string-matches the quote against the page: verified / partial / unverified. Unverified planets are faded, never hidden | – |
 | 5. Alive today? | Per company: past-year news search, then status (thriving / active / pivoted / shut down). The signal URL must be one we actually retrieved, and conflicting sources are flagged | **Search** with `freshness=year` |
-| (stretch) Deep dive | "Why did this universe die?" button | **Research** `POST api.you.com/v1/research` |
+| 6. Deep dive | "Why did this universe die?" button on shut-down companies | **Research** `POST api.you.com/v1/research` |
 
 **The map:** your idea is the sun. The inner rings are your industry, ordered by how many execution choices differ. The purple outer band is **Elsewhere**: other industries using the same core concept. Teal means a possible collaborator (non-overlapping market), coral means a direct competitor, and grey means shut down (a lesson). A pulsing ring means momentum this year.
 
@@ -33,47 +33,32 @@ cp .env.example .env   # set YDC_API_KEY and LLM_PROVIDER=you (no other key need
 uvicorn server:app --reload --port 8000
 # open http://localhost:8000   (add ?mock=1 for the offline mock data)
 ```
-`LLM_PROVIDER=you` uses the You.com Research API as the model, so a single You.com key runs everything. An OpenAI-compatible or Anthropic key also works (see `.env.example`). Tests: `python -m pytest -q`.
+`LLM_PROVIDER=you` uses the You.com Research API as the model, so a single You.com key runs everything. An OpenAI-compatible or Anthropic key also works (see `.env.example`). Tests: `python -m pytest -q` (or `python -m unittest discover -s tests`).
 
 **Deploy:** `render.yaml` is a Render Blueprint (one Python web service). Enter `YDC_API_KEY` in Render's dashboard, never in the repo. Public-deploy guards: `LIVE_RUNS_PER_HOUR`, `DEEP_DIVES_PER_HOUR`, and `RECORD_RUNS=0` so visitors' ideas aren't added to the public Replay list.
 Every live run is recorded in `cache/`, and the **Replay** dropdown replays it with real timing. **Record 2 great runs before demo time**, so a slow conference Wi-Fi can't kill the demo. Still show at least one live run, because judges score "works live".
 
-## OpenCrawl (required): set up in the first 15 minutes, all 4 laptops
-OpenCrawl lets our coding agents search each other's sessions and post to a shared board, so 4 people plus 4 agents don't step on each other.
-```bash
-npm i -g @getopencrawl/cli@next
-opencrawl login --api https://app.getopencrawl.com --json
-opencrawl collect install --yes --backfill skip --api https://app.getopencrawl.com --json
-opencrawl skills install --api https://app.getopencrawl.com --json
-# add MCP server to your coding agent: https://app.getopencrawl.com/mcp
-```
-**Team protocol:** each agent posts to the board when it starts or finishes a file ("A: owns prompts.py, changed EXTRACT schema, added field X"). Before changing a shared contract (the event schema in `pipeline.py`), search the board first. Screenshot the board for the demo video and Devpost, since that's the evidence for "Best use of OpenCrawl".
+## Built with OpenCrawl
+Four people and their coding agents (Claude Code on Claude Max and Pro, plus Codex) built this in one day. OpenCrawl was the shared memory between them.
+- **Shared board:** each agent posted handoffs, ownership ("index.html is yours until 3:15"), contract changes (new event fields), merges and deploy status, so parallel agents didn't overwrite each other.
+- **Agents checking each other:** one agent's review caught that auto-repaired quotes were being counted as "verified". Another agent fixed it and relabelled the demo recordings, which is why the receipt rate above is honest.
+- **Session search:** agents looked up each other's past sessions (deploy steps, API findings) instead of asking a human.
 
-## Team split (4 people)
-| Who | Owns | First hour | Then |
-|---|---|---|---|
-| **A: Agent / prompts** | `prompts.py`, `pipeline.py` | Get keys, run 3 real ideas, fix prompts until matches are true parallel universes (not same-category noise) | Research API "deep dive" endpoint |
-| **B: Receipts** | `verify.py`, status step | Check verification rates on real pages and tune the matcher | Conflicting-source handling, "shut down" detection quality |
-| **C: Frontend** | `static/index.html` | Make it beautiful on replayed runs (no API cost) | Filters (show only collaborators / dead), share link, mobile |
-| **D: Product + story** | README, Devpost, video, LinkedIn | Pick 2 demo ideas, write pitch and business model | Record demo video by 3:15, post LinkedIn, submit by 3:45 |
+## Privacy
+Your idea is processed in memory for the length of the run (about 30-45 s) and is not stored by our server: no disk writes (`RECORD_RUNS=0`), no request logs (`--no-access-log`). At the end of a run the page shows a "nothing stored" receipt, and **Forget this run** clears it from your browser. To search the live web, the idea is sent to You.com under their data policy (zero data retention is available on enterprise plans). We don't claim end-to-end deletion.
 
-## Timeline (deadline 4:00 PM)
-- **12:15** OpenCrawl on all laptops, keys in `.env`, first live run
-- **1:00** Lunch. Real results for 3 ideas, prompts tuned
-- **2:00** UI polished, status signals solid, 2 demo runs recorded
-- **2:45** Feature freeze. Only bug fixes after this
-- **3:15** Demo video recorded (1–3 min)
-- **3:45** Devpost submitted (public GitHub repo link required), LinkedIn post live
+## Limits, honestly
+- **Specific ideas work best.** "Agentic fashion commerce" returns big generalists. "An AI stylist on WhatsApp reselling pre-owned designer clothes for students in Mumbai" returns real parallel universes.
+- **Not a patent or legal novelty search.** Elsewhere finds commercial prior art (companies), not patents. Check patents before you build.
+- **"Alive today" needs a dated source.** It is found for about half of companies; the rest show as quiet or unknown rather than guessed.
+
+## What's next
+Ask 2 follow-up questions when an idea is too vague; rank public companies and unicorns lower; a patent lens (Google Patents through the same You.com Search); watchlists that alert when a parallel universe raises, pivots or dies.
 
 ## Business
 - **Customer:** pre-seed founders and accelerators (validation before building), and VC associates (market maps in diligence).
 - **Money:** free first map, then $29/mo for founders; $299/mo per seat for VC teams with **watchlists** (alerts when a parallel universe raises, pivots or dies). That's the Live Wire hook and the recurring revenue.
 - **Why not Crunchbase "similar companies":** those match by category. We match by *core idea*, show *which decision differs*, and show *how each version is doing right now*, with receipts.
 
-## Demo script (2 min)
-1. "Every idea already exists somewhere, executed differently. Those versions are the best evidence a founder has, but LLMs can't tell you which are alive today, and they invent companies."
-2. Type an idea live. Point at the core idea and your 5 execution choices.
-3. Planets stream in. Click a **teal** one: "same idea, different country; a partner, not a threat." Show the verified quote and the dated news signal.
-4. Click a **grey** one: "this version shut down in 2025. Here's the source. That's a lesson you got in 4 minutes."
-5. Point at a **faded** planet: "the model claimed this one, and our verifier couldn't find the quote, so we don't trust it."
-6. Business slide: watchlists for VCs.
+## Team
+Built at Ground Truth: The Live Agents Hackathon (You.com, NYC, 14 Nov 2026) by [@arnabdas1999](https://github.com/arnabdas1999), [@ssachis](https://github.com/ssachis), [@khyatithapliyal](https://github.com/khyatithapliyal) and [@Namantyagi2727](https://github.com/Namantyagi2727).
