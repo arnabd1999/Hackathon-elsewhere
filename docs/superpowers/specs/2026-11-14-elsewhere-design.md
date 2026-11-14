@@ -41,7 +41,8 @@ For one idea, Elsewhere returns a cross-industry map plus five cards, every clai
 
 ## Constraints
 
-- About 3 hours of build time, 3 people, one branch each (`naman`, plus one per teammate), merged into `main` when ready.
+- About 3 hours of build time, 4 people, one branch each (`naman`, plus one per teammate), merged into `main` when ready.
+- AI tools: 1 Claude Max (Fable 5.2, the strongest model, most usage), 2 Claude Pro (tighter usage limits), and 2 ChatGPT Plus accounts (Codex). Heavy, hard work goes to the Max account; Pro and ChatGPT accounts get well-bounded tasks.
 - Public repo: secrets only in `.env.local` (gitignored). `.env.example` is committed with names only.
 - TypeScript throughout.
 - Must use You.com (core) and OpenCrawl (team's coding agents coordinate through the OpenCrawl board).
@@ -105,17 +106,25 @@ type ExploreEvent =
 
 **Demo mode:** `?demo=<slug>` replays a recorded event stream from `public/demo/<slug>.json` with its original timing. We record 2–3 good live runs before 3 PM. The fixture also lets the UI be built before the pipeline works.
 
-## Suggested split (team to confirm)
+## Team split (4 people, by AI account)
 
-Each person owns separate files, so merging into `main` rarely conflicts:
+The hardest work goes to the Claude Max account. Each person owns separate files, so merging into `main` rarely conflicts.
 
-| Owner | Files | First deliverable |
-|---|---|---|
-| Pipeline | `lib/you.ts`, `lib/llm.ts`, `lib/pipeline.ts`, `app/api/explore/route.ts` | Abstract step + one search card streaming end to end |
-| UI | `app/page.tsx`, `app/results/*`, `components/*` | Map + cards rendering from a fake event fixture |
-| Pitch | `public/demo/*`, `README.md`, Devpost text, slides | 3 strong example ideas, "who pays" answer, OpenCrawl story |
+| # | Account | Role | Owns | First deliverable (by ~1:45 PM) | Then |
+|---|---|---|---|---|---|
+| 1 | **Claude Max (Fable 5.2)** | **Pipeline: the heavy lifting** | `lib/you.ts`, `lib/llm.ts`, `lib/pipeline.ts`, `lib/prompts.ts`, `app/api/explore/route.ts` | Abstract step + industry nodes + one card streaming end to end with real You.com calls | All five cards, citation guard, Research API card, prompt quality, error handling |
+| 2 | Claude Pro | **The map (the wow)** | `components/IdeaMap.tsx`, `components/EvidencePanel.tsx`, `app/results/page.tsx` | Animated map driven by the fake fixture: idea in the center, industries animating in, node click → evidence panel | Polish: layout, colors, motion, loading states |
+| 3 | Claude Pro | **Cards, home page, demo replay** | `app/page.tsx`, `components/Card*.tsx`, `components/SourceChip.tsx`, `lib/replay.ts` | Home page with idea box + example chips; five cards rendering from the fixture with numbered source chips | `?demo=<slug>` replay with original timing; record 2–3 runs once the pipeline works |
+| 4 | ChatGPT Plus ×2 (Codex) | **Pitch, Devpost, demo ideas, glue** | `README.md`, `docs/pitch.md`, `public/demo/*`, Devpost page, slides | 3 example ideas that produce great cross-industry results; one-line pitch with "who pays"; OpenCrawl story | Devpost text + screenshots by 3:30; content post tagging You.com; small isolated fixes if a builder is blocked |
 
-`lib/types.ts` (the contract above) and the Next.js scaffold land on `main` first, so everyone branches from the same base.
+Why this way:
+- **Pipeline → Max.** It's the riskiest part: multi-step prompts, parallel API calls, streaming and the citation guard all need the strongest model and the most usage.
+- **UI → Pro.** Screens are well-bounded and can be built against the fake fixture without waiting for the pipeline, so Pro usage limits are less likely to bite. If one hits its limit, its owner hands the next bounded task to a ChatGPT account.
+- **Pitch + glue → ChatGPT.** Two accounts give plenty of headroom for writing and small isolated tasks. Codex sessions on this machine are only captured by OpenCrawl after the OpenCrawl hooks are trusted in Codex (`/hooks`).
+
+**Shared setup lands on `main` first** (Next.js scaffold, `lib/types.ts`, `public/demo/fixture.json` fake event stream, `.env.example`), so all four branch from the same base and the UI owners can start immediately.
+
+**Coordination:** each person's coding agent registers on the OpenCrawl board with its role as its task. Agents post there when they change the shared contract (`lib/types.ts`), merge to `main`, or are blocked.
 
 ## Calls made while writing this (check these)
 
@@ -130,6 +139,6 @@ Exact prompts, query counts, model choice after testing, styling and animation d
 ## Open items (team)
 
 - `YDC_API_KEY` from the organizers' free credits → `.env.local`.
-- Who owns which part.
+- Which teammate holds which account (role 1–4).
 - Who pays, and how much (for the pitch).
 - OpenCrawl beyond team coordination, for the "Best use of OpenCrawl" prize (optional).
