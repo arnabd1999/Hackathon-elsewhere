@@ -38,7 +38,7 @@ def _sse(ev: dict) -> str:
 
 
 def _slug(s: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:50] or "idea"
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:50].strip("-") or "idea"
 
 
 @app.get("/")
