@@ -6,6 +6,10 @@
 
 **Track:** The Analyst (founder and VC diligence), with Receipts built in.
 
+**Live demo:** https://elsewhere-8t65.onrender.com (free hosting: the first load after 15 idle minutes takes ~30 s to wake up). Pick a run from **Replay** for an instant, free walkthrough, or type your own idea for a live run (capped at 20 live runs per hour).
+
+**Receipts, honestly counted:** across our two recorded demo runs, 82% of company quotes (28 of 34) are found verbatim on the source page. When the model's quote isn't on the page, we show the page's own sentence about the company and label it **partial**, never verified.
+
 ## Why this needs a live-web agent
 Your idea probably already exists, executed a little differently: another country, another customer, another business model. Those "parallel universes" are the best evidence a founder can get, because each is a natural experiment on one decision. But it only works with today's data. Which versions raised money this quarter, which pivoted, and which quietly shut down last month? A model trained last year can't know, and it will invent companies to fill the gap. Elsewhere only shows companies it found on the live web, with a verbatim quote matched against the source page.
 
@@ -25,10 +29,13 @@ Your idea probably already exists, executed a little differently: another countr
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # add YDC_API_KEY + an LLM key
+cp .env.example .env   # set YDC_API_KEY and LLM_PROVIDER=you (no other key needed)
 uvicorn server:app --reload --port 8000
-# open http://localhost:8000
+# open http://localhost:8000   (add ?mock=1 for the offline mock data)
 ```
+`LLM_PROVIDER=you` uses the You.com Research API as the model, so a single You.com key runs everything. An OpenAI-compatible or Anthropic key also works (see `.env.example`). Tests: `python -m pytest -q`.
+
+**Deploy:** `render.yaml` is a Render Blueprint (one Python web service). Enter `YDC_API_KEY` in Render's dashboard, never in the repo. Public-deploy guards: `LIVE_RUNS_PER_HOUR`, `DEEP_DIVES_PER_HOUR`, and `RECORD_RUNS=0` so visitors' ideas aren't added to the public Replay list.
 Every live run is recorded in `cache/`, and the **Replay** dropdown replays it with real timing. **Record 2 great runs before demo time**, so a slow conference Wi-Fi can't kill the demo. Still show at least one live run, because judges score "works live".
 
 ## OpenCrawl (required): set up in the first 15 minutes, all 4 laptops
