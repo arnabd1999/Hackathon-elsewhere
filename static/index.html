@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elsewhere — the multiverse of your idea</title>
+<style>
+  :root{
+    --bg:#07080d; --panel:#0e1018; --line:#1f2333; --text:#e7e9f2; --dim:#8a90a6;
+    --collab:#4fd1c5; --comp:#ff7a6b; --insp:#b18cff; --sun:#ffd36b; --ok:#5ee28a; --warn:#f5b748; --dead:#5b6075;
+  }
+  *{box-sizing:border-box} html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,sans-serif}
+  header{display:flex;gap:12px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}
+  .brand{font-weight:700;letter-spacing:.3px;font-size:16px;white-space:nowrap}
+  .brand span{color:var(--dim);font-weight:400}
+  #idea{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:11px 14px;font-size:14px;outline:none} #idea:focus{border-color:#3a4060}
+  button,select{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;font-size:14px;cursor:pointer}
+  button.primary{background:var(--sun);color:#1a1405;border:none;font-weight:600}
+  button:disabled{opacity:.5;cursor:default}
+  main{display:grid;grid-template-columns:300px 1fr 380px;height:calc(100% - 63px)}
+  aside{border-right:1px solid var(--line);padding:16px;overflow:auto}
+  #detail{border-right:none;border-left:1px solid var(--line)}
+  h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin:18px 0 8px}
+  h3:first-child{margin-top:0}
+  .core{font-size:15px;line-height:1.4;background:linear-gradient(135deg,#1b1a10,#11121a);border:1px solid #3a3420;
+    border-radius:12px;padding:12px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--dim)}
+  .chip b{color:var(--text);font-weight:500}
+  .q{font-size:12px;color:var(--dim);padding:5px 0;border-bottom:1px dashed var(--line)}
+  .q::before{content:"⌕ ";color:var(--sun)}
+  #log div{font-size:12px;color:var(--dim);padding:3px 0}
+  #log div:last-child{color:var(--text)}
+  #log div.err{color:var(--comp)}
+  #stage{position:relative;overflow:hidden}
+  svg{width:100%;height:100%;display:block}
+  .ring{fill:none;stroke:#1a1e2c;stroke-dasharray:2 6}
+  .ringlabel{fill:#3b4158;font-size:11px;letter-spacing:.5px}
+  .planet{cursor:pointer;transition:transform 1.1s cubic-bezier(.2,.8,.2,1),opacity .6s}
+  .planet circle.body{stroke:#000;stroke-width:1.5}
+  .planet text{fill:var(--text);font-size:12px;pointer-events:none;paint-order:stroke;stroke:#07080d;stroke-width:4px}
+  .planet.unverified{opacity:.38} .planet.unverified circle.body{stroke:#aaa;stroke-dasharray:3 3}
+  .planet.selected circle.body{stroke:#fff;stroke-width:3}
+  .halo{fill:none;stroke-width:2;opacity:0}
+  .st-thriving .halo{stroke:var(--ok);opacity:1;animation:pulse 1.8s infinite}
+  .st-active .halo{stroke:var(--ok);opacity:.55}
+  .st-pivoted .halo{stroke:var(--warn);opacity:.9}
+  .st-shut_down circle.body{fill:var(--dead)!important} .st-shut_down text{fill:var(--dim)}
+  @keyframes pulse{0%{stroke-width:2;opacity:.9}100%{stroke-width:10;opacity:0}}
+  .sun{fill:var(--sun);filter:drop-shadow(0 0 24px #ffd36b88)}
+  .legend{position:absolute;left:14px;bottom:12px;font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  #empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);
+    text-align:center;pointer-events:none;padding:40px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .name{font-size:20px;font-weight:700} .sub{color:var(--dim)}
+  .tag{display:inline-block;font-size:11px;border-radius:999px;padding:2px 8px;margin:6px 6px 0 0;border:1px solid}
+  table{width:100%;border-collapse:collapse;font-size:12px} td,th{padding:6px 4px;border-bottom:1px solid var(--line);
+    text-align:left;vertical-align:top} th{color:var(--dim);font-weight:500}
+  tr.diff td{color:var(--sun)} tr.diff td:first-child::after{content:" ⟂";}
+  blockquote{margin:0;padding:10px 12px;border-left:3px solid var(--collab);background:#0b1414;border-radius:6px;font-size:13px}
+  a{color:#9ab4ff;word-break:break-all}
+  .badge-verified{color:var(--ok)} .badge-partial{color:var(--warn)} .badge-unverified{color:var(--comp)}
+  .conflict{color:var(--warn);font-size:12px;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Elsewhere <span>· the multiverse of your idea</span></div>
+  <input id="idea" placeholder="Describe what you're building… e.g. an SMS assistant that helps NYC deli owners track daily cash flow">
+  <button class="primary" id="go">Explore</button>
+  <select id="demos"><option value="">Replay a run…</option></select>
+</header>
+<main>
+  <aside id="left">
+    <h3>Core idea</h3><div id="core" class="core sub">Your idea with every execution choice stripped away.</div>
+    <h3>Core concept, any industry</h3><div id="mech" class="core sub" style="background:linear-gradient(135deg,#1a1430,#11121a);border-color:#3a2d60">…</div>
+    <h3>Your execution</h3><div id="exec" class="chips"></div>
+    <h3>Parallel searches</h3><div id="queries"></div>
+    <h3>Agent log</h3><div id="log"></div>
+  </aside>
+  <section id="stage">
+    <svg id="svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="empty">Every idea already exists somewhere, executed a little differently.<br>Find out how each version played out.</div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--insp)"></i>inspiration from another industry</span>
+      <span><i class="dot" style="background:var(--collab)"></i>possible collaborator</span>
+      <span><i class="dot" style="background:var(--comp)"></i>direct competitor</span>
+      <span><i class="dot" style="background:var(--dead)"></i>shut down: a lesson</span>
+      <span style="color:var(--ok)">◎ pulsing = momentum this year</span>
+      <span>faded = quote failed verification</span>
+    </div>
+  </section>
+  <aside id="detail"><div class="sub">Click a planet to see its receipts.</div></aside>
+</main>
+<script>
+const AXES = ["customer","geography","business_model","technology","channel"];
+const RING_LABELS = ["","Your industry · nearly the same","Your industry · different choices","Your industry · far execution",
+  "ELSEWHERE · other industries, same core concept",""];
+const C = 500, R0 = 95, STEP = 76, GOLD = 2.39996;
+const $ = id => document.getElementById(id);
+const svg = $("svg"), NS = "http://www.w3.org/2000/svg";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let state = {}, es = null;
+
+function el(tag, attrs = {}, parent = svg){ const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; }
+
+function reset(){
+  if (es) es.close();
+  state = {core:null, universes:{}, ringCount:[0,0,0,0,0,0], selected:null};
+  svg.innerHTML = ""; $("log").innerHTML = ""; $("queries").innerHTML = ""; $("exec").innerHTML = "";
+  $("core").textContent = "…"; $("mech").textContent = "…"; $("detail").innerHTML = '<div class="sub">Click a planet to see its receipts.</div>';
+  const stars = el("g");
+  for (let i = 0; i < 160; i++) el("circle", {cx:Math.random()*1000, cy:Math.random()*1000,
+    r:Math.random()*1.2, fill:"#fff", opacity:Math.random()*.5}, stars);
+  for (let k = 1; k <= 5; k++){
+    el("circle", {cx:C, cy:C, r:R0 + (k-1)*STEP, class:"ring", style: k >= 4 ? "stroke:#2a2045" : ""});
+    const t = el("text", {x:C, y:C - (R0 + (k-1)*STEP) - 6, class:"ringlabel", "text-anchor":"middle",
+      style: k === 4 ? "fill:#7d64b8;font-weight:600" : ""}); t.textContent = RING_LABELS[k];
+  }
+  el("circle", {cx:C, cy:C, r:34, class:"sun"});
+  const you = el("text", {x:C, y:C+5, "text-anchor":"middle", "font-size":"13", "font-weight":"700", fill:"#1a1405"}); you.textContent = "YOU";
+  $("empty").style.display = "flex";
+}
+
+function log(msg, cls){ const d = document.createElement("div"); d.textContent = msg; if (cls) d.className = cls; $("log").appendChild(d); }
+
+function onCore(ev){
+  $("core").textContent = ev.core_idea; $("core").classList.remove("sub");
+  $("exec").innerHTML = AXES.map(a => `<span class="chip">${a.replace("_"," ")}: <b>${esc(ev.user_execution[a])}</b></span>`).join("");
+  $("mech").textContent = ev.core_mechanism || ""; $("mech").classList.remove("sub");
+  $("queries").innerHTML = ev.queries.map(q => `<div class="q"><b style="color:var(--text);font-weight:500">${esc(q.label)}</b><br>${esc(q.q)}</div>`).join("");
+  state.core = ev;
+}
+
+function onUniverse(u){
+  $("empty").style.display = "none";
+  const ring = u.kind === "inspiration" ? (state.ringCount[4] <= state.ringCount[5] ? 4 : 5)
+             : (u.divergence <= 1 ? 1 : u.divergence <= 3 ? 2 : 3);
+  const i = state.ringCount[ring]++;
+  const ang = i * GOLD + ring * 0.9, rad = R0 + (ring-1)*STEP;
+  const x = C + rad * Math.cos(ang), y = C + rad * Math.sin(ang);
+  const g = el("g", {class:`planet ${u.verification === "unverified" ? "unverified" : ""}`});
+  g.style.transform = `translate(${C}px,${C}px)`; g.style.opacity = 0;
+  el("circle", {r:20, class:"halo", fill:"none"}, g);
+  el("circle", {r: u.kind === "inspiration" ? 16 : 14, class:"body", fill: colorOf(u)}, g);
+  const t = el("text", {x:0, y:32, "text-anchor":"middle"}, g); t.textContent = u.name.length > 22 ? u.name.slice(0,21)+"…" : u.name;
+  g.addEventListener("click", () => select(u.id));
+  requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transform = `translate(${x}px,${y}px)`; g.style.opacity = ""; }));
+  state.universes[u.id] = {...u, g};
+  log(u.kind === "inspiration" ? `✦ ${u.name} (${u.industry}): same concept elsewhere, quote ${u.verification}`
+                               : `◉ ${u.name}: ${u.divergence} change${u.divergence===1?"":"s"}, quote ${u.verification}`);
+}
+
+function colorOf(u){ return u.kind === "inspiration" ? "var(--insp)" : u.relationship === "competitor" ? "var(--comp)" : "var(--collab)"; }
+function onStatus(s){
+  const u = state.universes[s.id]; if (!u) return;
+  Object.assign(u, {status:s.status, signal:s.signal, signal_url:s.signal_url, signal_date:s.signal_date, conflict:s.conflict});
+  u.g.classList.add(`st-${s.status}`);
+  if (state.selected === s.id) select(s.id);
+}
+
+function select(id){
+  const u = state.universes[id]; if (!u) return;
+  Object.values(state.universes).forEach(x => x.g.classList.remove("selected"));
+  u.g.classList.add("selected"); state.selected = id;
+  const yours = state.core ? state.core.user_execution : {};
+  const relColor = colorOf(u);
+  const kindTag = u.kind === "inspiration" ? `inspiration · ${u.industry}` : u.relationship;
+  const statusTxt = {thriving:"Thriving", active:"Active", pivoted:"Pivoted", shut_down:"Shut down", quiet:"Quiet this year", unknown:"Unknown"}[u.status] || "Checking…";
+  $("detail").innerHTML = `
+    <div class="card">
+      <div class="name">${esc(u.name)}</div>
+      <div class="sub">${esc(u.one_liner)}</div>
+      <span class="tag" style="color:${relColor};border-color:${relColor}">${esc(kindTag)}</span>
+      <span class="tag" style="color:var(--dim);border-color:var(--line)">found via ${esc(u.lens_label)}</span>
+      <span class="tag" style="color:var(--dim);border-color:var(--line)">${esc(statusTxt)}</span>
+      ${u.website ? `<div style="margin-top:8px"><a href="${esc(u.website)}" target="_blank" rel="noopener">${esc(u.website)}</a></div>` : ""}
+    </div>
+    ${u.kind === "inspiration" && u.transfer ? `<div class="card" style="border-color:#3a2d60"><h3>What you could borrow</h3><div>${esc(u.transfer)}</div></div>` : ""}
+    <div class="card"><h3>Where this universe split from yours</h3>
+      <div style="margin-bottom:8px">${esc(u.divergence_summary)}</div>
+      <table><tr><th></th><th>You</th><th>Them</th></tr>
+      ${AXES.map(a => `<tr class="${u.divergent_axes.includes(a) ? "diff" : ""}"><td>${a.replace("_"," ")}</td><td>${esc(yours[a])}</td><td>${esc(u.execution[a])}</td></tr>`).join("")}
+      </table></div>
+    <div class="card"><h3>Receipt <span class="badge-${u.verification}">· quote ${u.verification}</span></h3>
+      <blockquote>“${esc(u.evidence_quote)}”</blockquote>
+      <div style="margin-top:6px;font-size:12px"><a href="${esc(u.source_url)}" target="_blank" rel="noopener">${esc(u.source_title || u.source_url)}</a></div></div>
+    <div class="card"><h3>Alive today?</h3>
+      ${u.status ? `<div>${esc(u.signal || "No clear signal.")}</div>
+        ${u.signal_url ? `<div style="font-size:12px;margin-top:4px">${esc(u.signal_date || "")} · <a href="${esc(u.signal_url)}" target="_blank" rel="noopener">source</a></div>` : ""}
+        ${u.conflict ? `<div class="conflict">⚠ Sources disagree: ${esc(u.conflict)}</div>` : ""}` : `<div class="sub">Checking live news…</div>`}
+    </div>
+    <div class="card"><h3>What to learn</h3><div>${esc(u.lesson)}</div>
+      <h3>Why ${esc(u.relationship)}</h3><div class="sub">${esc(u.relationship_reason)}</div></div>`;
+}
+
+function run(url){
+  reset(); $("go").disabled = true;
+  es = new EventSource(url);
+  es.onmessage = m => {
+    const ev = JSON.parse(m.data);
+    if (ev.type === "stage") log(ev.msg);
+    else if (ev.type === "core") onCore(ev);
+    else if (ev.type === "universe") onUniverse(ev);
+    else if (ev.type === "status") onStatus(ev);
+    else if (ev.type === "done"){ log(`Done: ${ev.count} parallel universes found.`); finish(); loadDemos(); }
+    else if (ev.type === "error"){ log("Error: " + ev.msg, "err"); finish(); }
+  };
+  es.onerror = () => { log("Stream closed.", "err"); finish(); };
+}
+function finish(){ if (es) es.close(); es = null; $("go").disabled = false; }
+
+$("go").onclick = () => { const v = $("idea").value.trim(); if (v) run("/api/explore?idea=" + encodeURIComponent(v)); };
+$("idea").addEventListener("keydown", e => { if (e.key === "Enter") $("go").click(); });
+$("demos").onchange = e => { const f = e.target.value; if (!f) return;
+  const opt = e.target.selectedOptions[0]; $("idea").value = opt.dataset.idea || "";
+  run("/api/replay?file=" + encodeURIComponent(f)); e.target.value = ""; };
+async function loadDemos(){
+  try { const list = await (await fetch("/api/demos")).json();
+    $("demos").innerHTML = '<option value="">Replay a run…</option>' +
+      list.map(d => `<option value="${esc(d.file)}" data-idea="${esc(d.idea)}">${esc(d.idea.slice(0,60))}</option>`).join("");
+  } catch {}
+}
+reset(); loadDemos();
+</script>
+</body>
+</html>
