@@ -1,36 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Elsewhere
 
-## Getting Started
+A founder types an idea. Elsewhere finds where its core concept already lives in other industries and returns five cited cards (feasibility, demand, features, failures, collaborators), streamed live and shown on a map. Built for the You.com hackathon with You.com search and OpenCrawl.
 
-First, run the development server:
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # add YDC_API_KEY (names only in .env.example; never commit .env.local)
+npm run dev                  # http://localhost:3000
+npm test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Team
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Roles, file ownership and kickoff steps: [docs/team/README.md](docs/team/README.md).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Build against fake data
 
-## Learn More
+`POST /api/explore` with `{ "idea": "..." }` streams the fake fixture as NDJSON (add `?fast=1` to skip delays). You can also read `public/demo/fixture.json` directly. The event contract lives in `lib/types.ts`; read streams with `readEvents()` from `lib/ndjson.ts`.
 
-To learn more about Next.js, take a look at the following resources:
+## Workflow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Work on your own branch, merge to `main` when a piece works, and pull `main` often.
