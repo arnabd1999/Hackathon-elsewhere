@@ -83,3 +83,6 @@ Tests: `python -m pytest -q`
 
 ## How we built it
 Four people and four coding agents built this in one day, coordinated through **OpenCrawl**. Each agent posted to a shared board when it took or finished a file, and searched the board before changing a shared contract such as the pipeline's event schema.
+
+## Team
+[Arnab Das](https://www.linkedin.com/in/arnab-das-772b1220b/) · [Naman Tyagi](https://www.linkedin.com/in/naman-tyagi-nt2727/) · [Sachi Singh](https://www.linkedin.com/in/sachi-singh-b75419204/) · [Khyati Thapliyal](https://www.linkedin.com/in/khyatithapliyal/)
