@@ -11,6 +11,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 try:
     from dotenv import load_dotenv
@@ -26,6 +27,7 @@ CACHE.mkdir(exist_ok=True)
 SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
 app = FastAPI(title="Elsewhere")
+app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
 
 def _sse(ev: dict) -> str:

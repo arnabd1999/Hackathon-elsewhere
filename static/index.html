@@ -3,230 +3,633 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Elsewhere — the multiverse of your idea</title>
+<title>Elsewhere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#07080d; --panel:#0e1018; --line:#1f2333; --text:#e7e9f2; --dim:#8a90a6;
-    --collab:#4fd1c5; --comp:#ff7a6b; --insp:#b18cff; --sun:#ffd36b; --ok:#5ee28a; --warn:#f5b748; --dead:#5b6075;
+    --bg:#06070c; --bg2:#0b0d16; --panel:rgba(16,18,30,.72); --panel-solid:#10121e; --line:#1e2236; --line2:#2a2f4a;
+    --text:#eceef7; --dim:#8b91a9; --faint:#4a506a;
+    --sun:#ffd36b; --sun2:#ffb648;
+    --collab:#4fd1c5; --comp:#ff7a6b; --insp:#b18cff; --dead:#5b6075;
+    --ok:#5ee28a; --warn:#f5b748;
+    --radius:14px;
   }
-  *{box-sizing:border-box} html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
-    font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,sans-serif}
-  header{display:flex;gap:12px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}
-  .brand{font-weight:700;letter-spacing:.3px;font-size:16px;white-space:nowrap}
-  .brand span{color:var(--dim);font-weight:400}
-  #idea{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;
-    padding:11px 14px;font-size:14px;outline:none} #idea:focus{border-color:#3a4060}
-  button,select{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;
-    padding:10px 14px;font-size:14px;cursor:pointer}
-  button.primary{background:var(--sun);color:#1a1405;border:none;font-weight:600}
-  button:disabled{opacity:.5;cursor:default}
-  main{display:grid;grid-template-columns:300px 1fr 380px;height:calc(100% - 63px)}
-  aside{border-right:1px solid var(--line);padding:16px;overflow:auto}
-  #detail{border-right:none;border-left:1px solid var(--line)}
-  h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin:18px 0 8px}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:
+    radial-gradient(1200px 700px at 50% 45%, #141634 0%, transparent 60%),
+    radial-gradient(800px 500px at 85% 10%, #1d1438 0%, transparent 60%),
+    var(--bg);overflow:hidden}
+  button,select,input{font:inherit;color:inherit}
+  a{color:#9ab4ff;word-break:break-word}
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+
+  /* ---------- top bar ---------- */
+  header{position:relative;z-index:5;display:flex;gap:12px;align-items:center;padding:12px 20px;
+    border-bottom:1px solid var(--line);background:rgba(6,7,12,.6);backdrop-filter:blur(10px);height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px;font-size:16px;white-space:nowrap}
+  .brand .logo{width:22px;height:22px}
+  .brand small{color:var(--dim);font-weight:500;font-size:13px}
+  .search{flex:1;display:flex;gap:8px;max-width:820px;opacity:0;pointer-events:none;transition:opacity .4s}
+  body.running .search{opacity:1;pointer-events:auto}
+  .search input{flex:1;background:var(--panel-solid);border:1px solid var(--line);border-radius:10px;padding:9px 14px;outline:none}
+  .search input:focus{border-color:var(--line2)}
+  .btn{background:var(--panel-solid);border:1px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+  .btn:hover{border-color:var(--line2)}
+  .btn.primary{background:linear-gradient(180deg,var(--sun),var(--sun2));color:#1a1405;border:none;font-weight:700}
+  .btn:disabled{opacity:.5;cursor:default}
+  .spacer{flex:1}
+  .mockbadge{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--warn);
+    border:1px solid #5a4520;background:#1d160a;border-radius:999px;padding:4px 10px;white-space:nowrap}
+
+  /* ---------- layout ---------- */
+  main{position:relative;display:grid;grid-template-columns:300px 1fr 380px;height:calc(100% - 60px)}
+  aside{position:relative;z-index:2;overflow:auto;padding:18px;opacity:0;transform:translateX(-12px);transition:opacity .6s .2s,transform .6s .2s}
+  #right{transform:translateX(12px)}
+  body.running aside,body.running #right{opacity:1;transform:none}
+  #left{border-right:1px solid var(--line)} #right{border-left:1px solid var(--line)}
+  h3{font-size:11px;text-transform:uppercase;letter-spacing:1.3px;color:var(--dim);margin:20px 0 9px;font-weight:600}
   h3:first-child{margin-top:0}
-  .core{font-size:15px;line-height:1.4;background:linear-gradient(135deg,#1b1a10,#11121a);border:1px solid #3a3420;
-    border-radius:12px;padding:12px}
-  .chips{display:flex;flex-wrap:wrap;gap:6px}
-  .chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--dim)}
-  .chip b{color:var(--text);font-weight:500}
-  .q{font-size:12px;color:var(--dim);padding:5px 0;border-bottom:1px dashed var(--line)}
-  .q::before{content:"⌕ ";color:var(--sun)}
-  #log div{font-size:12px;color:var(--dim);padding:3px 0}
-  #log div:last-child{color:var(--text)}
-  #log div.err{color:var(--comp)}
-  #stage{position:relative;overflow:hidden}
-  svg{width:100%;height:100%;display:block}
-  .ring{fill:none;stroke:#1a1e2c;stroke-dasharray:2 6}
-  .ringlabel{fill:#3b4158;font-size:11px;letter-spacing:.5px}
-  .planet{cursor:pointer;transition:transform 1.1s cubic-bezier(.2,.8,.2,1),opacity .6s}
-  .planet circle.body{stroke:#000;stroke-width:1.5}
-  .planet text{fill:var(--text);font-size:12px;pointer-events:none;paint-order:stroke;stroke:#07080d;stroke-width:4px}
-  .planet.unverified{opacity:.38} .planet.unverified circle.body{stroke:#aaa;stroke-dasharray:3 3}
-  .planet.selected circle.body{stroke:#fff;stroke-width:3}
-  .halo{fill:none;stroke-width:2;opacity:0}
-  .st-thriving .halo{stroke:var(--ok);opacity:1;animation:pulse 1.8s infinite}
-  .st-active .halo{stroke:var(--ok);opacity:.55}
-  .st-pivoted .halo{stroke:var(--warn);opacity:.9}
-  .st-shut_down circle.body{fill:var(--dead)!important} .st-shut_down text{fill:var(--dim)}
-  @keyframes pulse{0%{stroke-width:2;opacity:.9}100%{stroke-width:10;opacity:0}}
-  .sun{fill:var(--sun);filter:drop-shadow(0 0 24px #ffd36b88)}
-  .legend{position:absolute;left:14px;bottom:12px;font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
-  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
-  #empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);
-    text-align:center;pointer-events:none;padding:40px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
-  .name{font-size:20px;font-weight:700} .sub{color:var(--dim)}
-  .tag{display:inline-block;font-size:11px;border-radius:999px;padding:2px 8px;margin:6px 6px 0 0;border:1px solid}
-  table{width:100%;border-collapse:collapse;font-size:12px} td,th{padding:6px 4px;border-bottom:1px solid var(--line);
-    text-align:left;vertical-align:top} th{color:var(--dim);font-weight:500}
-  tr.diff td{color:var(--sun)} tr.diff td:first-child::after{content:" ⟂";}
-  blockquote{margin:0;padding:10px 12px;border-left:3px solid var(--collab);background:#0b1414;border-radius:6px;font-size:13px}
-  a{color:#9ab4ff;word-break:break-all}
-  .badge-verified{color:var(--ok)} .badge-partial{color:var(--warn)} .badge-unverified{color:var(--comp)}
-  .conflict{color:var(--warn);font-size:12px;margin-top:6px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .core{font-size:15px;line-height:1.45;font-weight:500}
+  .core.sun{border-color:#3d3520;background:linear-gradient(135deg,rgba(60,48,16,.45),rgba(16,18,30,.7))}
+  .core.mech{border-color:#3a2d60;background:linear-gradient(135deg,rgba(50,30,90,.45),rgba(16,18,30,.7));font-size:14px}
+  .choices{display:flex;flex-direction:column;gap:6px}
+  .choice{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);
+    border-radius:10px;background:var(--panel);cursor:pointer;transition:border-color .2s,background .2s}
+  .choice:hover,.choice.on{border-color:var(--line2);background:rgba(30,34,54,.8)}
+  .choice .n{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700;
+    background:#1b1e30;color:var(--dim)}
+  .choice .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim)}
+  .choice .v{font-weight:600}
+  .choice .cnt{float:right;font-size:11px;color:var(--dim);font-weight:500}
+  details{margin-top:4px} summary{cursor:pointer;color:var(--dim);font-size:12px}
+  .q{font-size:12px;color:var(--dim);padding:6px 0;border-bottom:1px dashed var(--line)}
+  .q b{color:var(--text);font-weight:500}
+
+  /* ---------- stage ---------- */
+  #stage{position:relative;overflow:hidden;min-height:0}
+  #board{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .wedge{fill:rgba(255,255,255,.018);stroke:#2c3250;stroke-width:1.5;transition:fill .3s}
+  .wedge.alt{fill:rgba(255,255,255,.045)}
+  .wedge.hl{fill:rgba(255,211,107,.07)}
+  .ring{fill:none;stroke:#2a3050;stroke-width:1.2}
+  .ringnum{fill:#59607e;font-size:12px;font-family:"JetBrains Mono",monospace}
+  .axislabel{fill:var(--dim);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600}
+  .axisval{fill:var(--text);font-size:13px;font-weight:600}
+  .band{fill:none;stroke:url(#bandGrad);stroke-width:92;opacity:.55}
+  .bandlabel{fill:#a48ae6;font-size:11px;letter-spacing:2.2px;font-weight:700}
+  .bull{fill:url(#sunGrad);filter:url(#glow)}
+  .bulltxt{fill:#2a1d04;font-weight:800;font-size:15px;letter-spacing:1px}
+  .spin{transform-origin:500px 500px;animation:spin 140s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  body.landing .boardwrap{opacity:.35;transform:scale(1.08)}
+  .boardwrap{transition:opacity 1s,transform 1.2s cubic-bezier(.2,.8,.2,1);transform-origin:500px 500px}
+
+  .dart{cursor:pointer;transition:transform 1.05s cubic-bezier(.16,1,.3,1),opacity .5s}
+  .dart .body{stroke:#06070c;stroke-width:2;transition:fill .5s,r .2s}
+  .dart:hover .body,.dart.sel .body{stroke:#fff;stroke-width:2.5}
+  .dart .lbl{fill:var(--text);font-size:13px;font-weight:600;pointer-events:none;paint-order:stroke;stroke:#06070c;stroke-width:4px;stroke-linejoin:round}
+  .dart .halo{fill:none;stroke-width:2;opacity:0}
+  .dart.unverified{opacity:.42} .dart.unverified .body{stroke-dasharray:3 3;stroke:#aab}
+  .dart.st-thriving .halo{stroke:var(--ok);opacity:1;animation:pulse 1.8s infinite}
+  .dart.st-active .halo{stroke:var(--ok);opacity:.5}
+  .dart.st-pivoted .halo{stroke:var(--warn);opacity:.95;stroke-dasharray:4 3}
+  .dart.st-shut_down .body{fill:var(--dead)!important} .dart.st-shut_down .lbl{fill:var(--dim)}
+  .dart .x{stroke:#cfd3e0;stroke-width:2;opacity:0;transition:opacity .4s}
+  .dart.st-shut_down .x{opacity:.9}
+  .dart.dim{opacity:.08!important}
+  @keyframes pulse{0%{stroke-width:2;opacity:.9;r:17}100%{stroke-width:1;opacity:0;r:34}}
+  .ripple{fill:none;stroke:#fff;stroke-width:2;animation:ripple .9s ease-out forwards;pointer-events:none}
+  @keyframes ripple{0%{r:6;opacity:.8}100%{r:46;opacity:0}}
+  .trail{stroke:url(#trailGrad);stroke-width:2;stroke-linecap:round;pointer-events:none;stroke-dasharray:4 5;opacity:0;transition:opacity .25s}
+  .trail.on{opacity:1}
+
+  /* headline over board */
+  #headline{position:absolute;left:0;right:0;top:16px;z-index:3;text-align:center;pointer-events:none;opacity:0;transition:opacity .5s}
+  body.running #headline{opacity:1}
+  #headline .big{font-size:22px;font-weight:800;letter-spacing:-.3px}
+  #headline .big em{font-style:normal;background:linear-gradient(90deg,var(--sun),#ff9f6b);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #filters{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px;pointer-events:auto}
+  .pill{font-size:12px;border:1px solid var(--line);background:rgba(12,14,24,.85);border-radius:999px;padding:5px 11px;cursor:pointer;color:var(--dim);display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+  .pill b{color:var(--text);font-weight:700}
+  .pill:hover{border-color:var(--line2)}
+  .pill.on{border-color:var(--sun);color:var(--text);background:rgba(60,48,16,.5)}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%}
+
+  #howto{position:absolute;left:16px;bottom:14px;z-index:3;font-size:12px;color:var(--dim);max-width:360px;opacity:0;transition:opacity .5s}
+  body.running #howto{opacity:1}
+  #howto b{color:var(--text)}
+  #ticker{position:absolute;right:16px;bottom:14px;z-index:3;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim);
+    background:rgba(12,14,24,.85);border:1px solid var(--line);border-radius:999px;padding:6px 12px;opacity:0;transition:opacity .4s;max-width:46%}
+  #ticker.on{opacity:1}
+  #ticker span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spinner{width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--sun);border-radius:50%;animation:rot .8s linear infinite;flex:none}
+  #ticker.done .spinner{animation:none;border-color:var(--ok)}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  #tip{position:absolute;z-index:6;pointer-events:none;background:rgba(12,14,24,.96);border:1px solid var(--line2);border-radius:12px;
+    padding:10px 12px;width:250px;font-size:12px;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;box-shadow:0 10px 40px #0008}
+  #tip.on{opacity:1;transform:none}
+  #tip .t{font-weight:700;font-size:14px}
+  #tip .s{color:var(--dim);margin:2px 0 8px}
+
+  /* ---------- landing hero ---------- */
+  #hero{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:24px;transition:opacity .6s,transform .8s cubic-bezier(.2,.8,.2,1)}
+  body.running #hero{opacity:0;transform:translateY(-30px) scale(.98);pointer-events:none}
+  #hero .eyebrow{font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--sun);font-weight:700;margin-bottom:14px}
+  #hero h1{font-size:clamp(34px,5.4vw,64px);line-height:1.03;letter-spacing:-1.8px;margin:0 0 14px;font-weight:800;max-width:900px}
+  #hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--sun),#ff9f6b 40%,var(--insp));-webkit-background-clip:text;background-clip:text;color:transparent}
+  #hero p{color:var(--dim);font-size:17px;max-width:620px;margin:0 0 28px}
+  .bigsearch{display:flex;gap:8px;width:min(720px,100%);background:rgba(16,18,30,.85);border:1px solid var(--line2);border-radius:16px;padding:8px;
+    box-shadow:0 0 0 6px rgba(255,211,107,.04),0 20px 60px #0009}
+  .bigsearch input{flex:1;background:transparent;border:none;outline:none;padding:10px 12px;font-size:16px;min-width:0}
+  .bigsearch .btn{padding:12px 20px;font-size:15px;border-radius:11px}
+  .examples{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px;max-width:760px}
+  .examples button{font-size:12.5px;background:rgba(16,18,30,.7);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--dim)}
+  .examples button:hover{color:var(--text);border-color:var(--line2)}
+  .threeup{display:flex;gap:28px;margin-top:38px;color:var(--dim);font-size:13px;flex-wrap:wrap;justify-content:center}
+  .threeup b{color:var(--text)}
+
+  /* ---------- right panel ---------- */
+  .rank{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px;border:1px solid transparent;border-radius:12px;cursor:pointer;transition:background .2s,border-color .2s}
+  .rank:hover,.rank.hov{background:rgba(30,34,54,.6);border-color:var(--line)}
+  .rank .nm{font-weight:600;display:flex;align-items:center;gap:7px;min-width:0}
+  .rank .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rank .pct{font-family:"JetBrains Mono",monospace;font-weight:500;font-size:13px}
+  .rank .sub{grid-column:1/-1;color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rank.dim{opacity:.25}
+  .dna{display:flex;gap:3px}
+  .dna i{width:14px;height:6px;border-radius:2px;background:var(--sun)}
+  .dna i.diff{background:transparent;box-shadow:inset 0 0 0 1.5px #59607e}
+  .bar{grid-column:1/-1;height:3px;background:#1a1e30;border-radius:2px;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sun2),var(--sun));border-radius:2px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+
+  .dhead{display:flex;gap:14px;align-items:center}
+  .gauge{flex:none}
+  .gauge text{font-family:"JetBrains Mono",monospace}
+  .name{font-size:21px;font-weight:800;letter-spacing:-.3px;line-height:1.15}
+  .sub{color:var(--dim)}
+  .tags{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .tag{font-size:11px;border-radius:999px;padding:3px 9px;border:1px solid var(--line);color:var(--dim)}
+  .cmp{width:100%;border-collapse:collapse;font-size:12.5px}
+  .cmp td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  .cmp td:first-child{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:1px;width:84px;padding-top:9px}
+  .cmp tr.diff td:nth-child(3){color:var(--sun);font-weight:600}
+  .cmp tr.same td:nth-child(3)::after{content:"  same";color:var(--faint);font-size:11px}
+  blockquote{margin:0;padding:10px 12px;border-left:3px solid var(--collab);background:rgba(10,30,30,.4);border-radius:8px;font-size:13px}
+  .v-verified{color:var(--ok)} .v-partial{color:var(--warn)} .v-unverified{color:var(--comp)}
+  .status{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+  .conflict{color:var(--warn);font-size:12px;margin-top:8px}
+  .back{background:none;border:none;color:var(--dim);cursor:pointer;padding:0 0 10px;font-size:12px}
+  .back:hover{color:var(--text)}
+  .fadein{animation:fadein .35s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .empty{color:var(--dim);font-size:13px;padding:10px 4px}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:1180px){ main{grid-template-columns:260px 1fr 330px} }
+  @media (max-width:960px){
+    body{overflow:auto}
+    main{display:flex;flex-direction:column;height:auto}
+    #stage{order:1;height:min(100vw,620px);min-height:420px}
+    #right{order:2;border-left:none;border-top:1px solid var(--line)}
+    #left{order:3;border-right:none;border-top:1px solid var(--line)}
+    aside{overflow:visible;padding:16px}
+    body.landing #stage{height:calc(100vh - 60px)}
+    body.landing aside{display:none}
+    header{padding:10px 16px}
+    .brand small{display:none}
+    #howto{display:none}
+    #ticker{max-width:calc(100% - 32px);right:16px;left:16px}
+    #headline .big{font-size:17px}
+    body.running #stage{height:auto;min-height:0;display:flex;flex-direction:column}
+    body.running #headline{position:relative;top:0;padding:14px 12px 0;order:-1}
+    body.running #board{position:relative;height:min(100vw,560px)}
+    body.running #ticker{position:relative;left:auto;right:auto;bottom:auto;margin:0 16px 12px;align-self:center}
+  }
+  @media (max-width:960px){
+    body.landing #hero{justify-content:flex-start;overflow:auto;padding-top:36px}
+    #demos{max-width:130px;min-width:0}
+    header{gap:8px}
+    .search,.search input{min-width:0}
+    .spacer{display:none}
+  }
+  @media (max-width:600px){
+    #hero h1{letter-spacing:-1px}
+    .mockbadge{padding:3px 7px;font-size:10px}
+    .search{display:none}
+    body.running .search{display:none}
+    #hero p{font-size:15px}
+    .bigsearch{flex-direction:column}
+    .threeup{gap:14px}
+  }
+  @media (prefers-reduced-motion:reduce){ .spin,.dart.st-thriving .halo{animation:none} .dart{transition:opacity .3s} }
 </style>
 </head>
-<body>
+<body class="landing">
 <header>
-  <div class="brand">Elsewhere <span>· the multiverse of your idea</span></div>
-  <input id="idea" placeholder="Describe what you're building… e.g. an SMS assistant that helps NYC deli owners track daily cash flow">
-  <button class="primary" id="go">Explore</button>
-  <select id="demos"><option value="">Replay a run…</option></select>
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="none" stroke="#ffd36b" stroke-opacity=".35"/><circle cx="12" cy="12" r="7" fill="none" stroke="#ffd36b" stroke-opacity=".6"/><circle cx="12" cy="12" r="3" fill="#ffd36b"/><circle cx="20" cy="6" r="1.8" fill="#b18cff"/></svg>
+    Elsewhere <small>· your idea's multiverse</small>
+  </div>
+  <form class="search" id="topForm">
+    <input id="ideaTop" aria-label="Describe your idea" placeholder="Describe another idea…">
+    <button class="btn primary" id="goTop" type="submit">Explore</button>
+  </form>
+  <div class="spacer"></div>
+  <select class="btn" id="demos" aria-label="Replay a recorded run"><option value="">Replay a run…</option></select>
+  <span class="mockbadge" id="mockbadge" hidden>Mock data</span>
 </header>
+
 <main>
   <aside id="left">
-    <h3>Core idea</h3><div id="core" class="core sub">Your idea with every execution choice stripped away.</div>
-    <h3>Core concept, any industry</h3><div id="mech" class="core sub" style="background:linear-gradient(135deg,#1a1430,#11121a);border-color:#3a2d60">…</div>
-    <h3>Your execution</h3><div id="exec" class="chips"></div>
-    <h3>Parallel searches</h3><div id="queries"></div>
-    <h3>Agent log</h3><div id="log"></div>
+    <h3>Your idea, stripped to its core</h3>
+    <div class="card core sun" id="core">…</div>
+    <h3>The same concept, any industry</h3>
+    <div class="card core mech" id="mech">…</div>
+    <h3>Your 5 choices · the 5 slices of the board</h3>
+    <div class="choices" id="choices"></div>
+    <h3>What the agent searched</h3>
+    <details><summary id="qsum">0 live searches</summary><div id="queries"></div></details>
   </aside>
+
   <section id="stage">
-    <svg id="svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
-    <div id="empty">Every idea already exists somewhere, executed a little differently.<br>Find out how each version played out.</div>
-    <div class="legend">
-      <span><i class="dot" style="background:var(--insp)"></i>inspiration from another industry</span>
-      <span><i class="dot" style="background:var(--collab)"></i>possible collaborator</span>
-      <span><i class="dot" style="background:var(--comp)"></i>direct competitor</span>
-      <span><i class="dot" style="background:var(--dead)"></i>shut down: a lesson</span>
-      <span style="color:var(--ok)">◎ pulsing = momentum this year</span>
-      <span>faded = quote failed verification</span>
+    <svg id="board" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Dartboard of similar companies">
+      <defs>
+        <radialGradient id="sunGrad"><stop offset="0" stop-color="#fff3c9"/><stop offset=".55" stop-color="#ffd36b"/><stop offset="1" stop-color="#ff9f45"/></radialGradient>
+        <radialGradient id="bandGrad" cx="500" cy="500" r="460" gradientUnits="userSpaceOnUse">
+          <stop offset=".78" stop-color="#2a1b52" stop-opacity="0"/><stop offset=".86" stop-color="#3b2575"/><stop offset=".96" stop-color="#2a1b52" stop-opacity="0"/></radialGradient>
+        <linearGradient id="trailGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd36b"/><stop offset="1" stop-color="#fff"/></linearGradient>
+        <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+      </defs>
+      <g id="stars"></g>
+      <g class="boardwrap" id="boardwrap">
+        <g id="static"></g>
+        <g id="trails"></g>
+        <g id="darts"></g>
+        <g id="bull"></g>
+      </g>
+    </svg>
+
+    <div id="headline">
+      <div class="big" id="headtxt">Searching the multiverse…</div>
+      <div id="filters"></div>
+    </div>
+    <div id="howto"><b>Closer to the bullseye = closer to your idea.</b> Each ring is one more choice they made differently; the slice shows the main one. Purple band: other industries, same core concept.</div>
+    <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
+    <div id="tip"></div>
+
+    <div id="hero">
+      <div class="eyebrow">Live-web founder research</div>
+      <h1>Your idea already exists.<br><em>Elsewhere.</em></h1>
+      <p>Describe what you're building. We find every real company that tried a version of it, show how close each one is to you, and which are still alive today, with a receipt for every claim.</p>
+      <form class="bigsearch" id="heroForm">
+        <input id="idea" aria-label="Describe your idea" placeholder="e.g. an SMS assistant that helps NYC deli owners track daily cash flow" autofocus>
+        <button class="btn primary" type="submit">Find my multiverse →</button>
+      </form>
+      <div class="examples" id="examples"></div>
+      <div class="threeup">
+        <span><b>◎ Bullseye</b> = your idea</span>
+        <span><b>Each ring out</b> = one more thing done differently</span>
+        <span><b style="color:var(--insp)">Purple band</b> = other industries</span>
+      </div>
     </div>
   </section>
-  <aside id="detail"><div class="sub">Click a planet to see its receipts.</div></aside>
+
+  <aside id="right"><div id="detail"></div></aside>
 </main>
-<script>
+
+<script type="module">
+import { API, CONFIG } from "/static/api.js";
+
 const AXES = ["customer","geography","business_model","technology","channel"];
-const RING_LABELS = ["","Your industry · nearly the same","Your industry · different choices","Your industry · far execution",
-  "ELSEWHERE · other industries, same core concept",""];
-const C = 500, R0 = 95, STEP = 76, GOLD = 2.39996;
+const AXIS_NAME = {customer:"Customer", geography:"Geography", business_model:"Business model", technology:"Technology", channel:"Channel"};
+const C = 500, BULL = 56, RING = 54, BAND_R = 420;
+const NS = "http://www.w3.org/2000/svg";
 const $ = id => document.getElementById(id);
-const svg = $("svg"), NS = "http://www.w3.org/2000/svg";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let state = {}, es = null;
+const STATUS = {thriving:["Thriving","var(--ok)"], active:["Active","var(--ok)"], pivoted:["Pivoted","var(--warn)"],
+  shut_down:["Shut down","var(--dead)"], quiet:["Quiet this year","var(--dim)"], unknown:["Unknown","var(--dim)"]};
+const EXAMPLES = ["An SMS assistant that helps NYC deli owners track daily cash flow",
+  "A marketplace for restaurants to sell surplus food at closing time",
+  "Peer tutoring for community-college students over WhatsApp"];
 
-function el(tag, attrs = {}, parent = svg){ const e = document.createElementNS(NS, tag);
-  for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; }
+let S = null, cancel = null;
 
-function reset(){
-  if (es) es.close();
-  state = {core:null, universes:{}, ringCount:[0,0,0,0,0,0], selected:null};
-  svg.innerHTML = ""; $("log").innerHTML = ""; $("queries").innerHTML = ""; $("exec").innerHTML = "";
-  $("core").textContent = "…"; $("mech").textContent = "…"; $("detail").innerHTML = '<div class="sub">Click a planet to see its receipts.</div>';
-  const stars = el("g");
-  for (let i = 0; i < 160; i++) el("circle", {cx:Math.random()*1000, cy:Math.random()*1000,
-    r:Math.random()*1.2, fill:"#fff", opacity:Math.random()*.5}, stars);
-  for (let k = 1; k <= 5; k++){
-    el("circle", {cx:C, cy:C, r:R0 + (k-1)*STEP, class:"ring", style: k >= 4 ? "stroke:#2a2045" : ""});
-    const t = el("text", {x:C, y:C - (R0 + (k-1)*STEP) - 6, class:"ringlabel", "text-anchor":"middle",
-      style: k === 4 ? "fill:#7d64b8;font-weight:600" : ""}); t.textContent = RING_LABELS[k];
+function el(tag, attrs = {}, parent){ const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+const polar = (r, deg) => [C + r * Math.cos(deg * Math.PI/180), C + r * Math.sin(deg * Math.PI/180)];
+const wedgeCenter = i => -90 + i * 72;          // slice i is centred on this angle
+const ringR = d => d <= 0 ? BULL - 18 : BULL + (d - 0.5) * RING;
+const similarity = u => u.similarity ?? (u.kind === "inspiration" ? null : Math.max(5, Math.round(100 - u.divergence * 17)));
+const colorOf = u => u.status === "shut_down" ? "var(--dead)" : u.kind === "inspiration" ? "var(--insp)" : u.relationship === "competitor" ? "var(--comp)" : "var(--collab)";
+const primaryAxis = u => AXES.find(a => (u.divergent_axes || []).includes(a)) || "customer";
+
+/* ---------- static board ---------- */
+function drawStars(){
+  const g = $("stars"); g.innerHTML = "";
+  for (let i = 0; i < 220; i++) el("circle", {cx:Math.random()*1000, cy:Math.random()*1000, r:Math.random()*1.3,
+    fill:"#fff", opacity:(Math.random()*.55).toFixed(2)}, g);
+}
+function drawBoard(core){
+  const g = $("static"); g.innerHTML = "";
+  const spin = el("g", {class: core ? "" : "spin"}, g);
+  el("circle", {cx:C, cy:C, r:BAND_R, class:"band"}, spin);
+  const outer = BULL + 5 * RING;
+  AXES.forEach((a, i) => {
+    const a0 = wedgeCenter(i) - 36, a1 = wedgeCenter(i) + 36;
+    const [x0,y0] = polar(outer, a0), [x1,y1] = polar(outer, a1), [xi0,yi0] = polar(BULL, a0), [xi1,yi1] = polar(BULL, a1);
+    el("path", {d:`M${xi0},${yi0} L${x0},${y0} A${outer},${outer} 0 0 1 ${x1},${y1} L${xi1},${yi1} A${BULL},${BULL} 0 0 0 ${xi0},${yi0}Z`,
+      class:`wedge ${i % 2 ? "alt" : ""}`, "data-axis":a}, spin);
+  });
+  for (let d = 1; d <= 5; d++){
+    const r = BULL + d * RING;
+    el("circle", {cx:C, cy:C, r, class:"ring", style: d === 1 ? "stroke:#3a3a40" : ""}, spin);
+    const [x,y] = polar(r - RING/2, -90 + 36);
+    const t = el("text", {x, y: y + 3, class:"ringnum", "text-anchor":"middle"}, spin); t.textContent = d;
   }
-  el("circle", {cx:C, cy:C, r:34, class:"sun"});
-  const you = el("text", {x:C, y:C+5, "text-anchor":"middle", "font-size":"13", "font-weight":"700", fill:"#1a1405"}); you.textContent = "YOU";
-  $("empty").style.display = "flex";
+  // band label on a curve
+  el("path", {id:"bandPath", d:`M ${C-BAND_R+30},${C} A ${BAND_R-30},${BAND_R-30} 0 0 1 ${C+BAND_R-30},${C}`, fill:"none"}, spin);
+  const bt = el("text", {class:"bandlabel"}, spin);
+  const tp = el("textPath", {href:"#bandPath", startOffset:"50%", "text-anchor":"middle"}, bt);
+  tp.textContent = "ELSEWHERE · OTHER INDUSTRIES, SAME CORE CONCEPT";
+  // axis labels: "GEOGRAPHY / New York City" just outside the 5th ring
+  if (core){
+    AXES.forEach((a, i) => {
+      const [x,y] = polar(outer + 20, wedgeCenter(i));
+      const anchor = Math.abs(x - C) < 40 ? "middle" : x > C ? "start" : "end";
+      const yy = y < C - 300 ? y - 16 : y;
+      const l = el("text", {x, y:yy, class:"axislabel", "text-anchor":anchor}, g); l.textContent = AXIS_NAME[a];
+      const v = el("text", {x, y:yy + 16, class:"axisval", "text-anchor":anchor}, g);
+      const val = core.user_execution[a] || "unspecified"; v.textContent = val.length > 26 ? val.slice(0,25) + "…" : val;
+    });
+  }
+  const b = $("bull"); b.innerHTML = "";
+  el("circle", {cx:C, cy:C, r:BULL - 8, class:"bull"}, b);
+  const t = el("text", {x:C, y:C + 5, class:"bulltxt", "text-anchor":"middle"}, b); t.textContent = "YOU";
 }
 
-function log(msg, cls){ const d = document.createElement("div"); d.textContent = msg; if (cls) d.className = cls; $("log").appendChild(d); }
+/* ---------- placement ---------- */
+function place(u){
+  if (u.kind === "inspiration"){
+    const n = S.bandCount++;
+    // sit on the slice boundaries (labels are at slice centres), spreading out as more arrive
+    const ang = wedgeCenter(n % 5) + 36 + (Math.floor(n / 5) % 2 ? 14 : 0) * (n % 2 ? 1 : -1);
+    const r = BAND_R + (Math.floor(n / 5) % 3 - 1) * 24;
+    return polar(r, ang);
+  }
+  const i = AXES.indexOf(primaryAxis(u));
+  const d = Math.min(5, u.divergence);
+  const key = `${i}:${d}`; const k = S.slot[key] = (S.slot[key] ?? -1) + 1;
+  const spread = [0, -20, 20, -10, 10, -28, 28][k % 7];
+  const r = ringR(d) + (k >= 7 ? 12 : 0);
+  return polar(r, wedgeCenter(i) + (d === 0 ? k * 72 : spread));
+}
+function relax(){
+  // nudge overlapping darts apart, keeping them near their ring
+  const list = Object.values(S.u);
+  for (let it = 0; it < 30; it++){
+    for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++){
+      const p = list[a], q = list[b]; const dx = q.x - p.x, dy = q.y - p.y; const dist = Math.hypot(dx, dy) || 1;
+      if (dist < 40){ const push = (40 - dist) / 2, ux = dx / dist, uy = dy / dist;
+        p.x -= ux * push; p.y -= uy * push; q.x += ux * push; q.y += uy * push; }
+    }
+  }
+  list.forEach(u => { u.g.style.transform = `translate(${u.x}px,${u.y}px)`; });
+}
+
+/* ---------- events ---------- */
+function reset(){
+  if (cancel) cancel();
+  S = {core:null, u:{}, order:[], slot:{}, bandCount:0, selected:null, filter:"all", done:false, stage:""};
+  $("darts").innerHTML = ""; $("trails").innerHTML = "";
+  $("core").textContent = "…"; $("mech").textContent = "…"; $("choices").innerHTML = ""; $("queries").innerHTML = ""; $("qsum").textContent = "0 live searches";
+  drawBoard(null); renderHeadline(); renderRight();
+}
+function setTicker(msg, done){ $("tickertxt").textContent = msg; $("ticker").classList.add("on"); $("ticker").classList.toggle("done", !!done); }
 
 function onCore(ev){
-  $("core").textContent = ev.core_idea; $("core").classList.remove("sub");
-  $("exec").innerHTML = AXES.map(a => `<span class="chip">${a.replace("_"," ")}: <b>${esc(ev.user_execution[a])}</b></span>`).join("");
-  $("mech").textContent = ev.core_mechanism || ""; $("mech").classList.remove("sub");
-  $("queries").innerHTML = ev.queries.map(q => `<div class="q"><b style="color:var(--text);font-weight:500">${esc(q.label)}</b><br>${esc(q.q)}</div>`).join("");
-  state.core = ev;
+  S.core = ev;
+  $("core").textContent = ev.core_idea; $("mech").textContent = ev.core_mechanism || "";
+  $("queries").innerHTML = (ev.queries || []).map(q => `<div class="q"><b>${esc(q.label)}</b><br>${esc(q.q)}</div>`).join("");
+  $("qsum").textContent = `${(ev.queries || []).length} live searches`;
+  drawBoard(ev); renderChoices();
+}
+function renderChoices(){
+  if (!S.core) return;
+  const counts = Object.fromEntries(AXES.map(a => [a, 0]));
+  Object.values(S.u).forEach(u => { if (u.kind !== "inspiration") counts[primaryAxis(u)]++; });
+  $("choices").innerHTML = AXES.map((a, i) => `<div class="choice" data-axis="${a}">
+    <span class="n">${i + 1}</span>
+    <div><span class="cnt">${counts[a] ? counts[a] + " changed this" : ""}</span><div class="k">${AXIS_NAME[a]}</div><div class="v">${esc(S.core.user_execution[a])}</div></div></div>`).join("");
+  document.querySelectorAll(".choice").forEach(c => {
+    c.onmouseenter = () => hlAxis(c.dataset.axis); c.onmouseleave = () => hlAxis(null);
+  });
+}
+function hlAxis(axis){
+  document.querySelectorAll(".wedge").forEach(w => w.classList.toggle("hl", w.dataset.axis === axis));
+  Object.values(S.u).forEach(u => u.g.classList.toggle("dim", !!axis && (u.kind === "inspiration" || primaryAxis(u) !== axis)));
 }
 
-function onUniverse(u){
-  $("empty").style.display = "none";
-  const ring = u.kind === "inspiration" ? (state.ringCount[4] <= state.ringCount[5] ? 4 : 5)
-             : (u.divergence <= 1 ? 1 : u.divergence <= 3 ? 2 : 3);
-  const i = state.ringCount[ring]++;
-  const ang = i * GOLD + ring * 0.9, rad = R0 + (ring-1)*STEP;
-  const x = C + rad * Math.cos(ang), y = C + rad * Math.sin(ang);
-  const g = el("g", {class:`planet ${u.verification === "unverified" ? "unverified" : ""}`});
-  g.style.transform = `translate(${C}px,${C}px)`; g.style.opacity = 0;
-  el("circle", {r:20, class:"halo", fill:"none"}, g);
-  el("circle", {r: u.kind === "inspiration" ? 16 : 14, class:"body", fill: colorOf(u)}, g);
-  const t = el("text", {x:0, y:32, "text-anchor":"middle"}, g); t.textContent = u.name.length > 22 ? u.name.slice(0,21)+"…" : u.name;
+function onUniverse(ev){
+  if (S.u[ev.id]) return;
+  const u = {...ev}; S.u[u.id] = u; S.order.push(u.id);
+  const [x, y] = place(u); u.x = x; u.y = y;
+  const g = el("g", {class:`dart ${u.verification === "unverified" ? "unverified" : ""}`, tabindex:"0", role:"button", "aria-label":u.name}, $("darts"));
+  // fly in from outside the board along the same angle
+  const ang = Math.atan2(y - C, x - C); const sx = C + Math.cos(ang) * 900, sy = C + Math.sin(ang) * 900;
+  g.style.transform = `translate(${sx}px,${sy}px)`; g.style.opacity = 0;
+  el("circle", {r:17, class:"halo"}, g);
+  const body = el("circle", {r: u.kind === "inspiration" ? 14 : 13, class:"body", fill:colorOf(u)}, g);
+  el("path", {d:"M-5,-5 L5,5 M5,-5 L-5,5", class:"x"}, g);
+  const t = el("text", {y:30, "text-anchor":"middle", class:"lbl"}, g); t.textContent = u.name.length > 18 ? u.name.slice(0,17) + "…" : u.name;
+  u.g = g; u.body = body;
   g.addEventListener("click", () => select(u.id));
+  g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(u.id); } });
+  g.addEventListener("mouseenter", () => hover(u.id, true)); g.addEventListener("mouseleave", () => hover(u.id, false));
   requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transform = `translate(${x}px,${y}px)`; g.style.opacity = ""; }));
-  state.universes[u.id] = {...u, g};
-  log(u.kind === "inspiration" ? `✦ ${u.name} (${u.industry}): same concept elsewhere, quote ${u.verification}`
-                               : `◉ ${u.name}: ${u.divergence} change${u.divergence===1?"":"s"}, quote ${u.verification}`);
+  setTimeout(() => { const r = el("circle", {cx:u.x, cy:u.y, class:"ripple"}, $("trails")); setTimeout(() => r.remove(), 950); relax(); }, 900);
+  renderHeadline(); renderChoices(); if (!S.selected) renderRight();
 }
-
-function colorOf(u){ return u.kind === "inspiration" ? "var(--insp)" : u.relationship === "competitor" ? "var(--comp)" : "var(--collab)"; }
 function onStatus(s){
-  const u = state.universes[s.id]; if (!u) return;
+  const u = S.u[s.id]; if (!u) return;
   Object.assign(u, {status:s.status, signal:s.signal, signal_url:s.signal_url, signal_date:s.signal_date, conflict:s.conflict});
-  u.g.classList.add(`st-${s.status}`);
-  if (state.selected === s.id) select(s.id);
+  u.g.classList.add(`st-${s.status}`); u.body.setAttribute("fill", colorOf(u));
+  renderHeadline(); if (S.selected === s.id) renderDetail(u); else if (!S.selected) renderRight();
 }
 
-function select(id){
-  const u = state.universes[id]; if (!u) return;
-  Object.values(state.universes).forEach(x => x.g.classList.remove("selected"));
-  u.g.classList.add("selected"); state.selected = id;
-  const yours = state.core ? state.core.user_execution : {};
-  const relColor = colorOf(u);
-  const kindTag = u.kind === "inspiration" ? `inspiration · ${u.industry}` : u.relationship;
-  const statusTxt = {thriving:"Thriving", active:"Active", pivoted:"Pivoted", shut_down:"Shut down", quiet:"Quiet this year", unknown:"Unknown"}[u.status] || "Checking…";
-  $("detail").innerHTML = `
-    <div class="card">
-      <div class="name">${esc(u.name)}</div>
-      <div class="sub">${esc(u.one_liner)}</div>
-      <span class="tag" style="color:${relColor};border-color:${relColor}">${esc(kindTag)}</span>
-      <span class="tag" style="color:var(--dim);border-color:var(--line)">found via ${esc(u.lens_label)}</span>
-      <span class="tag" style="color:var(--dim);border-color:var(--line)">${esc(statusTxt)}</span>
-      ${u.website ? `<div style="margin-top:8px"><a href="${esc(u.website)}" target="_blank" rel="noopener">${esc(u.website)}</a></div>` : ""}
-    </div>
-    ${u.kind === "inspiration" && u.transfer ? `<div class="card" style="border-color:#3a2d60"><h3>What you could borrow</h3><div>${esc(u.transfer)}</div></div>` : ""}
-    <div class="card"><h3>Where this universe split from yours</h3>
-      <div style="margin-bottom:8px">${esc(u.divergence_summary)}</div>
-      <table><tr><th></th><th>You</th><th>Them</th></tr>
-      ${AXES.map(a => `<tr class="${u.divergent_axes.includes(a) ? "diff" : ""}"><td>${a.replace("_"," ")}</td><td>${esc(yours[a])}</td><td>${esc(u.execution[a])}</td></tr>`).join("")}
-      </table></div>
-    <div class="card"><h3>Receipt <span class="badge-${u.verification}">· quote ${u.verification}</span></h3>
-      <blockquote>“${esc(u.evidence_quote)}”</blockquote>
-      <div style="margin-top:6px;font-size:12px"><a href="${esc(u.source_url)}" target="_blank" rel="noopener">${esc(u.source_title || u.source_url)}</a></div></div>
-    <div class="card"><h3>Alive today?</h3>
-      ${u.status ? `<div>${esc(u.signal || "No clear signal.")}</div>
-        ${u.signal_url ? `<div style="font-size:12px;margin-top:4px">${esc(u.signal_date || "")} · <a href="${esc(u.signal_url)}" target="_blank" rel="noopener">source</a></div>` : ""}
-        ${u.conflict ? `<div class="conflict">⚠ Sources disagree: ${esc(u.conflict)}</div>` : ""}` : `<div class="sub">Checking live news…</div>`}
-    </div>
-    <div class="card"><h3>What to learn</h3><div>${esc(u.lesson)}</div>
-      <h3>Why ${esc(u.relationship)}</h3><div class="sub">${esc(u.relationship_reason)}</div></div>`;
+/* ---------- headline + filters ---------- */
+const FILTERS = [
+  ["all", "All", () => true, null],
+  ["twins", "Near-twins", u => u.kind !== "inspiration" && u.divergence <= 1, "var(--sun)"],
+  ["collab", "Possible partners", u => u.kind !== "inspiration" && u.relationship === "collaborator", "var(--collab)"],
+  ["comp", "Competitors", u => u.kind !== "inspiration" && u.relationship === "competitor", "var(--comp)"],
+  ["insp", "Other industries", u => u.kind === "inspiration", "var(--insp)"],
+  ["alive", "Growing", u => u.status === "thriving", "var(--ok)"],
+  ["dead", "Died: lessons", u => u.status === "shut_down", "var(--dead)"],
+];
+function renderHeadline(){
+  const list = Object.values(S.u); const n = list.length;
+  const twins = list.filter(FILTERS[1][2]).length;
+  $("headtxt").innerHTML = !n ? (S.core ? "Searching the multiverse…" : "Reading your idea…")
+    : `Your idea exists in <em>${n} other universe${n === 1 ? "" : "s"}</em>${twins ? `, ${twins} almost identical to yours` : ""}.`;
+  $("filters").innerHTML = !n ? "" : FILTERS.map(([id, label, fn, color]) => {
+    const c = list.filter(fn).length; if (id !== "all" && !c) return "";
+    return `<button class="pill ${S.filter === id ? "on" : ""}" data-f="${id}">${color ? `<i class="dot" style="background:${color}"></i>` : ""}${label} <b>${c}</b></button>`;
+  }).join("");
+  document.querySelectorAll("#filters .pill").forEach(p => p.onclick = () => { S.filter = S.filter === p.dataset.f && p.dataset.f !== "all" ? "all" : p.dataset.f; applyFilter(); renderHeadline(); });
+}
+function applyFilter(){
+  const fn = FILTERS.find(f => f[0] === S.filter)[2];
+  Object.values(S.u).forEach(u => u.g.classList.toggle("dim", !fn(u)));
+  if (!S.selected) renderRight();
 }
 
-function run(url){
-  reset(); $("go").disabled = true;
-  es = new EventSource(url);
-  es.onmessage = m => {
-    const ev = JSON.parse(m.data);
-    if (ev.type === "stage") log(ev.msg);
-    else if (ev.type === "core") onCore(ev);
-    else if (ev.type === "universe") onUniverse(ev);
-    else if (ev.type === "status") onStatus(ev);
-    else if (ev.type === "done"){ log(`Done: ${ev.count} parallel universes found.`); finish(); loadDemos(); }
-    else if (ev.type === "error"){ log("Error: " + ev.msg, "err"); finish(); }
+/* ---------- hover ---------- */
+function hover(id, on){
+  const u = S.u[id]; if (!u) return;
+  $("trails").querySelectorAll(".trail:not(.keep)").forEach(t => t.remove());
+  document.querySelectorAll(".rank").forEach(r => r.classList.toggle("hov", on && r.dataset.id === id));
+  const tip = $("tip");
+  if (!on){ tip.classList.remove("on"); return; }
+  const line = el("line", {x1:C, y1:C, x2:u.x, y2:u.y, class:"trail"}, $("trails"));
+  requestAnimationFrame(() => line.classList.add("on"));
+  const sim = similarity(u);
+  tip.innerHTML = `<div class="t">${esc(u.name)}</div><div class="s">${esc(u.one_liner)}</div>
+    ${sim != null ? `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="mono" style="color:var(--sun);font-weight:600">${sim}% like you</span>${dna(u)}</div>` : `<div style="color:var(--insp);font-weight:600;margin-bottom:6px">${esc(u.industry)} · same core concept</div>`}
+    <div>${esc(u.divergence_summary)}</div>`;
+  const svg = $("board"), pt = svg.createSVGPoint(); pt.x = u.x; pt.y = u.y;
+  const p = pt.matrixTransform(svg.getScreenCTM()), box = $("stage").getBoundingClientRect();
+  let left = p.x - box.left + 18, top = p.y - box.top - 20;
+  if (left + 260 > box.width) left = p.x - box.left - 268;
+  tip.style.left = Math.max(8, left) + "px"; tip.style.top = Math.max(8, Math.min(top, box.height - 150)) + "px";
+  tip.classList.add("on");
+}
+const dna = u => `<span class="dna" title="Gold = same choice as you">${AXES.map(a => `<i class="${(u.divergent_axes || []).includes(a) ? "diff" : ""}"></i>`).join("")}</span>`;
+
+/* ---------- right panel ---------- */
+function renderRight(){
+  if (S.selected) return renderDetail(S.u[S.selected]);
+  const fn = FILTERS.find(f => f[0] === S.filter)[2];
+  const list = Object.values(S.u);
+  if (!list.length){ $("detail").innerHTML = `<h3>Closest to you</h3><div class="empty">Companies appear here as the agent finds them, ranked by how similar they are to your idea.</div>`; return; }
+  const par = list.filter(u => u.kind !== "inspiration").sort((a, b) => similarity(b) - similarity(a));
+  const ins = list.filter(u => u.kind === "inspiration");
+  const row = u => {
+    const sim = similarity(u); const st = STATUS[u.status];
+    return `<div class="rank ${fn(u) ? "" : "dim"}" data-id="${u.id}">
+      <div class="nm"><i class="dot" style="background:${colorOf(u)}"></i><span>${esc(u.name)}</span></div>
+      ${sim != null ? `<div class="pct" style="color:${sim >= 70 ? "var(--sun)" : "var(--text)"}">${sim}%</div>` : `<div class="pct" style="color:var(--insp);font-size:11px">${esc(u.industry)}</div>`}
+      ${sim != null ? `<div class="bar"><i style="width:${sim}%"></i></div>` : ""}
+      <div class="sub">${dna(u)} &nbsp;${st ? `<span style="color:${st[1]}">${st[0]}</span> · ` : ""}${esc(u.divergence_summary)}</div></div>`;
   };
-  es.onerror = () => { log("Stream closed.", "err"); finish(); };
+  $("detail").innerHTML = `<h3>Closest to you</h3>${par.map(row).join("")}
+    ${ins.length ? `<h3>Same concept, other industries</h3>${ins.map(row).join("")}` : ""}
+    <div class="empty" style="font-size:12px"><span class="dna"><i></i></span> gold = same choice as you &nbsp;<span class="dna"><i class="diff"></i></span> = done differently</div>`;
+  document.querySelectorAll(".rank").forEach(r => {
+    r.onclick = () => select(r.dataset.id);
+    r.onmouseenter = () => hover(r.dataset.id, true); r.onmouseleave = () => hover(r.dataset.id, false);
+  });
 }
-function finish(){ if (es) es.close(); es = null; $("go").disabled = false; }
+function gauge(pct, color){
+  const r = 30, c = 2 * Math.PI * r, off = c * (1 - pct / 100);
+  return `<svg class="gauge" width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#1e2236" stroke-width="6"/>
+    <circle cx="38" cy="38" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" transform="rotate(-90 38 38)">
+    <animate attributeName="stroke-dashoffset" from="${c}" to="${off}" dur=".9s" fill="freeze" calcMode="spline" keySplines=".2 .8 .2 1" keyTimes="0;1"/></circle>
+    <text x="38" y="42" text-anchor="middle" fill="#eceef7" font-size="15" font-weight="600">${pct}%</text></svg>`;
+}
+function select(id){
+  const u = S.u[id]; if (!u) return;
+  Object.values(S.u).forEach(x => x.g.classList.toggle("sel", x.id === id));
+  $("trails").querySelectorAll(".keep").forEach(t => t.remove());
+  el("line", {x1:C, y1:C, x2:u.x, y2:u.y, class:"trail on keep"}, $("trails"));
+  S.selected = id; renderDetail(u);
+}
+function deselect(){
+  S.selected = null; Object.values(S.u).forEach(x => x.g.classList.remove("sel"));
+  $("trails").querySelectorAll(".keep").forEach(t => t.remove()); renderRight();
+}
+function renderDetail(u){
+  const yours = S.core ? S.core.user_execution : {};
+  const sim = similarity(u); const st = STATUS[u.status];
+  const rel = u.kind === "inspiration" ? `Inspiration · ${u.industry}` : u.relationship === "competitor" ? "Direct competitor" : "Possible partner";
+  $("detail").innerHTML = `<div class="fadein">
+    <button class="back" id="back">← All results</button>
+    <div class="card">
+      <div class="dhead">${sim != null ? gauge(sim, "var(--sun)") : gauge(100, "var(--insp)").replace(">100%<", ">≈<")}
+        <div><div class="name">${esc(u.name)}</div><div class="sub">${esc(u.one_liner)}</div></div></div>
+      <div class="tags">
+        <span class="tag" style="color:${colorOf(u)};border-color:${colorOf(u)}">${esc(rel)}</span>
+        <span class="tag">${st ? `<span style="color:${st[1]}">● ${st[0]}</span>` : "Checking if alive…"}</span>
+        <span class="tag">found via ${esc(u.lens_label)}</span>
+      </div>
+      ${u.website ? `<div style="margin-top:10px;font-size:12px"><a href="${esc(u.website)}" target="_blank" rel="noopener">${esc(u.website)}</a></div>` : ""}
+    </div>
+    ${u.kind === "inspiration" && u.transfer ? `<div class="card" style="border-color:#3a2d60"><h3>What you could borrow</h3><div style="font-weight:500">${esc(u.transfer)}</div></div>` : ""}
+    <div class="card"><h3>Where their universe split from yours</h3>
+      <div style="margin-bottom:10px;font-weight:500">${esc(u.divergence_summary)}</div>
+      <table class="cmp"><tr><td></td><td style="color:var(--dim)">You</td><td style="color:var(--dim)">Them</td></tr>
+      ${AXES.map(a => { const d = (u.divergent_axes || []).includes(a);
+        return `<tr class="${d ? "diff" : "same"}"><td>${AXIS_NAME[a]}</td><td>${esc(yours[a])}</td><td>${esc(u.execution?.[a])}</td></tr>`; }).join("")}
+      </table></div>
+    <div class="card"><h3>Alive today?</h3>
+      ${u.status ? `<div class="status" style="color:${st[1]}">● ${st[0]}</div>
+        <div style="margin-top:6px">${esc(u.signal || "No clear signal in the past year.")}</div>
+        ${u.signal_url ? `<div style="font-size:12px;margin-top:6px;color:var(--dim)">${esc(u.signal_date || "")} · <a href="${esc(u.signal_url)}" target="_blank" rel="noopener">source</a></div>` : ""}
+        ${u.conflict ? `<div class="conflict">⚠ Sources disagree: ${esc(u.conflict)}</div>` : ""}
+        ${u.status === "shut_down" ? `<button class="btn" id="dive" style="margin-top:12px;width:100%">Why did this universe die? →</button><div id="diveout"></div>` : ""}`
+        : `<div class="sub" style="display:flex;gap:8px;align-items:center"><div class="spinner"></div>Checking live news…</div>`}
+    </div>
+    <div class="card"><h3>Receipt · <span class="v-${u.verification}">quote ${esc(u.verification)}</span></h3>
+      <blockquote>“${esc(u.evidence_quote)}”</blockquote>
+      <div style="margin-top:8px;font-size:12px"><a href="${esc(u.source_url)}" target="_blank" rel="noopener">${esc(u.source_title || u.source_url)}</a></div></div>
+    <div class="card"><h3>The lesson for you</h3><div style="font-weight:500">${esc(u.lesson)}</div>
+      ${u.relationship_reason ? `<div class="sub" style="margin-top:8px;font-size:12.5px">${esc(u.relationship_reason)}</div>` : ""}</div>
+  </div>`;
+  $("back").onclick = deselect;
+  const dive = $("dive");
+  if (dive) dive.onclick = async () => {
+    dive.disabled = true; dive.textContent = "Researching…";
+    try { const r = await API.deepDive(u);
+      $("diveout").innerHTML = `<div style="margin-top:10px">${esc(r.summary)}</div>${(r.sources || []).map(s => `<div style="font-size:12px;margin-top:4px"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></div>`).join("")}`;
+      dive.remove();
+    } catch (e) { dive.disabled = false; dive.textContent = "Why did this universe die? →"; $("diveout").innerHTML = `<div class="conflict">${esc(e.message)}</div>`; }
+  };
+}
 
-$("go").onclick = () => { const v = $("idea").value.trim(); if (v) run("/api/explore?idea=" + encodeURIComponent(v)); };
-$("idea").addEventListener("keydown", e => { if (e.key === "Enter") $("go").click(); });
-$("demos").onchange = e => { const f = e.target.value; if (!f) return;
-  const opt = e.target.selectedOptions[0]; $("idea").value = opt.dataset.idea || "";
-  run("/api/replay?file=" + encodeURIComponent(f)); e.target.value = ""; };
+/* ---------- run ---------- */
+function handle(ev){
+  if (ev.type === "stage") setTicker(ev.msg);
+  else if (ev.type === "core") onCore(ev);
+  else if (ev.type === "universe") onUniverse(ev);
+  else if (ev.type === "status") onStatus(ev);
+  else if (ev.type === "done"){ S.done = true; setTicker(`Done · ${ev.count} universes found and checked`, true); loadDemos(); }
+  else if (ev.type === "error"){ setTicker("Error: " + ev.msg, true); $("ticker").style.borderColor = "var(--comp)"; }
+}
+async function start(kind, arg, idea){
+  document.body.classList.remove("landing"); document.body.classList.add("running");
+  $("ticker").style.borderColor = ""; $("ideaTop").value = idea || ""; reset(); setTicker("Starting…");
+  cancel = kind === "replay" ? await API.replay(arg, handle) : await API.explore(arg, handle);
+}
+function submit(v){ v = v.trim(); if (v) start("explore", v, v); }
+$("heroForm").onsubmit = e => { e.preventDefault(); submit($("idea").value); };
+$("topForm").onsubmit = e => { e.preventDefault(); submit($("ideaTop").value); };
+$("examples").innerHTML = EXAMPLES.map(x => `<button type="button">${esc(x)}</button>`).join("");
+$("examples").querySelectorAll("button").forEach(b => b.onclick = () => { $("idea").value = b.textContent; submit(b.textContent); });
+$("demos").onchange = e => { const o = e.target.selectedOptions[0]; if (!o.value) return; start("replay", o.value, o.dataset.idea); e.target.value = ""; };
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S?.selected) deselect(); });
 async function loadDemos(){
-  try { const list = await (await fetch("/api/demos")).json();
-    $("demos").innerHTML = '<option value="">Replay a run…</option>' +
-      list.map(d => `<option value="${esc(d.file)}" data-idea="${esc(d.idea)}">${esc(d.idea.slice(0,60))}</option>`).join("");
+  try { const list = await API.listDemos();
+    $("demos").innerHTML = '<option value="">Replay a run…</option>' + list.map(d => `<option value="${esc(d.file)}" data-idea="${esc(d.idea)}">${esc(d.idea.slice(0,60))}</option>`).join("");
   } catch {}
 }
-reset(); loadDemos();
+$("mockbadge").hidden = !CONFIG.USE_MOCK;
+drawStars(); reset(); loadDemos();
 </script>
 </body>
 </html>
