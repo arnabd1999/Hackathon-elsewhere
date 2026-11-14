@@ -6,7 +6,7 @@
        -> extract companies + verbatim quote (LLM, parallel) -> verify quote against page (code)
        -> per company: You.com Search freshness=year -> alive/pivoted/dead + dated signal (LLM, URL checked)
 
-Event types: stage, core, universe, status, done, error.
+Event types: stage, core, universe, status, analysis, done, error.
 """
 import asyncio
 import hashlib
@@ -142,6 +142,51 @@ def valid_name(name: str) -> bool:
     return 2 <= len(n) <= 60 and any(ch.isalpha() for ch in n) and not _CODE_LIKE.search(n)
 
 
+# ---- Stage / funding / ticker hygiene (frontend renders these as badges) ----
+STAGES = ("bootstrapped", "pre_seed", "seed", "series_a", "series_b_plus", "unicorn", "public",
+          "acquired", "shut_down", "unknown")
+FUNDED_STAGES = {"pre_seed", "seed", "series_a", "series_b_plus", "unicorn", "public", "acquired"}
+_STAGE_ALIAS = {"preseed": "pre_seed", "pre_seed_round": "pre_seed", "seed_round": "seed",
+                "series_b": "series_b_plus", "series_b+": "series_b_plus", "series_c": "series_b_plus",
+                "series_d": "series_b_plus", "series_e": "series_b_plus", "growth": "series_b_plus",
+                "ipo": "public", "listed": "public", "publicly_traded": "public",
+                "shutdown": "shut_down", "shut": "shut_down", "closed": "shut_down", "dead": "shut_down",
+                "defunct": "shut_down", "self_funded": "bootstrapped"}
+_UNKNOWN = {"", "unknown", "unspecified", "n/a", "na", "none", "null"}
+_TICKER = re.compile(r"^[A-Z]{1,10}:[A-Z0-9.]{1,10}$")
+_TICKER_PAREN = re.compile(r"^([A-Z0-9.]{1,10})\s*\(([A-Z]{1,10})\)$")  # "TOST (NASDAQ)"
+
+
+def is_unknown(v) -> bool:
+    return str(v if v is not None else "").strip().lower() in _UNKNOWN
+
+
+def clean_stage(s) -> str:
+    k = re.sub(r"[\s\-]+", "_", str(s or "").strip().lower())
+    k = _STAGE_ALIAS.get(k, k)
+    return k if k in STAGES else "unknown"
+
+
+def clean_ticker(s) -> str:
+    t = re.sub(r"\s*:\s*", ":", str(s or "").strip().upper())
+    if _TICKER.match(t):
+        return t
+    m = _TICKER_PAREN.match(t)
+    return f"{m.group(2)}:{m.group(1)}" if m else ""
+
+
+def clean_funding(s) -> str:
+    f = re.sub(r"\s+", " ", str(s or "")).strip()
+    if is_unknown(f):
+        return ""
+    return f if len(f) <= 60 else f[:59].rstrip(" ,;-") + "…"
+
+
+def unknown_axes(theirs: dict, mine: dict) -> list[str]:
+    """Axes where either side is unknown: we can't say they diverge there."""
+    return [a for a in AXES if is_unknown((theirs or {}).get(a)) or is_unknown((mine or {}).get(a))]
+
+
 def _build_universe(page: dict, c: dict, core: dict) -> dict:
     theirs = {a: str((c.get("execution") or {}).get(a, "unknown")) for a in AXES}
     theirs["geography"] = clean_geography(theirs["geography"])
@@ -152,7 +197,11 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
     transfer = (c.get("transfer") or "").strip()
     if kind == "inspiration" and not transfer:
         transfer = (c.get("lesson") or c.get("divergence_summary") or "").strip()
-    div = [a for a in (c.get("divergent_axes") or []) if a in AXES]
+    unk = unknown_axes(theirs, core.get("user_execution") or {})
+    div = [a for a in (c.get("divergent_axes") or []) if a in AXES and a not in unk]
+    stage_ = clean_stage(c.get("stage"))
+    funding = clean_funding(c.get("funding"))
+    ticker = clean_ticker(c.get("ticker"))
     md = page.get("markdown") or ""
     quote_repaired = False
     if verify_quote(c.get("evidence_quote", ""), md) == "unverified":
@@ -183,6 +232,11 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
         "execution": theirs,
         "divergent_axes": div,
         "divergence": len(div),
+        "unknown_axes": unk,
+        "stage": stage_,
+        "funding": funding,
+        "ticker": ticker,
+        "stage_url": (page.get("url") or "") if (stage_ != "unknown" or funding or ticker) else "",
         "divergence_summary": c.get("divergence_summary", ""),
         "lesson": c.get("lesson", ""),
         "relationship": c.get("relationship", "collaborator"),
@@ -194,6 +248,60 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
         "lens_label": page.get("lens_label", "Web"),
         "relationship_reason": c.get("relationship_reason", ""),
     }
+
+
+def market_facts(companies: list[dict]) -> dict:
+    """Deterministic market read from final company values (universe overridden by status)."""
+    def dead(c):
+        return c.get("status") == "shut_down" or c.get("stage") == "shut_down"
+
+    def funded(c):
+        return c.get("stage") in FUNDED_STAGES or bool(c.get("funding"))
+
+    live_twins = [c for c in companies if c.get("kind") == "parallel" and not dead(c)]
+    n, nf = len(live_twins), sum(1 for c in live_twins if funded(c))
+    market = "crowded" if n >= 5 or nf >= 3 else "open" if n <= 1 else "emerging"
+    return {"market": market, "funded": sum(1 for c in companies if funded(c)),
+            "dead": sum(1 for c in companies if dead(c)), "twins": n}
+
+
+def fallback_summary(f: dict) -> str:
+    n, d = f["twins"], f["dead"]
+    if f["market"] == "crowded":
+        return (f"{n} active companies already pursue this same idea and {f['funded']} of the companies we found "
+                f"have raised money or gone public. The space is crowded, so your edge has to come from a sharper "
+                f"customer, place or channel.")
+    if f["market"] == "emerging":
+        return (f"A handful of companies ({n}) are working on this same idea, and {d} of the companies we found "
+                f"have shut down. The market is still emerging, so there is room to win if you learn from them.")
+    return (f"We found little direct competition for this exact idea, and {d} of the companies we found have "
+            f"shut down. The market looks open, so check why others have not done it before you build.")
+
+
+async def analyze(client, core: dict, companies: list[dict]) -> dict:
+    """The closing analysis event. One LLM call for the summary; never raises."""
+    try:
+        f = market_facts(companies)
+    except Exception:  # noqa: BLE001
+        f = {"market": "open", "funded": 0, "dead": 0, "twins": 0}
+    summary = ""
+    try:
+        sample = [{"name": c.get("name"), "kind": c.get("kind"), "industry": c.get("industry"),
+                   "status": c.get("status") or "unknown", "stage": c.get("stage") or "unknown"}
+                  for c in companies[:10]]
+        out = await llm.complete_json(client, prompts.ANALYSIS,
+                                      prompts.analysis_user(core.get("core_idea", ""), f, len(companies), sample))
+        s = (out or {}).get("summary") if isinstance(out, dict) else None
+        if isinstance(s, str):
+            summary = re.sub(r"\s+", " ", s).strip()[:500]
+    except Exception:  # noqa: BLE001
+        summary = ""
+    try:
+        summary = summary or fallback_summary(f)
+    except Exception:  # noqa: BLE001
+        summary = summary or "We mapped the companies working on this idea. Look at who survived and why."
+    return {"type": "analysis", "market": f["market"], "funded": f["funded"], "dead": f["dead"],
+            "summary": summary}
 
 
 async def explore(idea: str):
@@ -288,6 +396,12 @@ async def explore(idea: str):
 
         # 5. Is each universe alive today?
         yield stage("Checking which universes are still alive today…")
+        final = {u["id"]: dict(u) for u in found.values()}
         for t in asyncio.as_completed(status_tasks):
-            yield await t
+            ev = await t
+            if isinstance(ev, dict) and ev.get("id") in final:
+                final[ev["id"]].update({k: ev[k] for k in ("status", "stage", "funding", "ticker") if k in ev})
+            yield ev
+        yield stage("Sizing up the market…")
+        yield await analyze(client, core, list(final.values()))
         yield {"type": "done", "count": len(found)}

@@ -49,7 +49,10 @@ Return JSON: {"companies": [ ... up to 3 ... ]}. Each company:
   "divergence_summary": "Same idea, but <the key difference>. 20 words max.",
   "lesson": "one concrete thing the founder can learn from how this company executed it",
   "relationship": "competitor | collaborator",
-  "relationship_reason": "one sentence"
+  "relationship_reason": "one sentence",
+  "stage": "bootstrapped | pre_seed | seed | series_a | series_b_plus | unicorn | public | acquired | shut_down | unknown",
+  "funding": "funding the page states, short, e.g. \"$40M Series B, 2024\"; else empty string",
+  "ticker": "stock ticker if the page states one, as EXCHANGE:SYMBOL, e.g. \"NASDAQ:TOST\"; else empty string"
 }
 
 Rules:
@@ -71,7 +74,8 @@ Rules:
 - Write "unknown" for any other execution axis the page doesn't support. Don't guess.
 - relationship = "competitor" when they serve the same customer in the same geography; otherwise "collaborator"
   (non-overlapping markets can partner, license, share playbooks or co-expand).
-- Never list the founder's own company."""
+- Never list the founder's own company.
+- stage, funding, ticker: ONLY what this page states about the company. Otherwise "unknown" / "". Never guess."""
 
 STATUS = """You decide whether a company is alive right now, using ONLY the search results given.
 
@@ -80,12 +84,24 @@ Return JSON:
   "status": "thriving | active | pivoted | shut_down | unknown",
   "signal": "the most recent notable event in one line (funding, launch, hiring, shutdown, pivot)",
   "signal_url": "the url of the result that supports the signal, copied exactly from the list",
-  "conflict": "if results disagree (e.g. one says shut down, another says launched), describe it in one line, else empty string"
+  "conflict": "if results disagree (e.g. one says shut down, another says launched), describe it in one line, else empty string",
+  "event_date": "YYYY-MM of the event in signal, if the results state it, else empty string",
+  "stage": "bootstrapped | pre_seed | seed | series_a | series_b_plus | unicorn | public | acquired | shut_down | unknown",
+  "funding": "latest funding the results state, short, e.g. \"$40M Series B, 2024\", else empty string",
+  "ticker": "stock ticker as EXCHANGE:SYMBOL (e.g. \"NASDAQ:TOST\") if stated, else empty string",
+  "stage_url": "the url of the result that states stage/funding/ticker, copied exactly from the list, else empty string"
 }
 
 Rules: thriving = raised money, launched or expanded recently. shut_down = closed or acquired and wound down.
 If no result is clearly about THIS company (same name could be a different firm), return status "unknown"
-and an empty signal_url. Never use outside knowledge."""
+and an empty signal_url. Never use outside knowledge. stage/funding/ticker/event_date: only what the results
+state; otherwise "unknown" / "". Never guess."""
+
+ANALYSIS = """You write a 2-sentence market read for a founder, using ONLY the facts given.
+Return JSON: {"summary": "..."}
+Rules: exactly 2 sentences, plain words, under 50 words. Say whether the market is crowded, emerging or open
+and why, using the given counts and at most 2-3 of the given company names. Never invent companies,
+numbers or facts that are not in the input. No hype, no markdown."""
 
 
 def decompose_user(idea: str) -> str:
@@ -109,4 +125,14 @@ def status_user(name: str, one_liner: str, items: list[dict]) -> str:
     return (
         f"Company: {name} ({one_liner})\n\nSearch results (newest info first where dated):\n"
         + json.dumps(items, indent=1)
+    )
+
+
+def analysis_user(core_idea: str, facts: dict, total: int, companies: list[dict]) -> str:
+    return (
+        f"Core idea: {core_idea}\n"
+        f"Market: {facts.get('market')}\n"
+        f"Companies found: {total} (active near-twins: {facts.get('twins', 0)}, "
+        f"funded: {facts.get('funded', 0)}, shut down: {facts.get('dead', 0)})\n"
+        f"Some companies: {json.dumps(companies)}"
     )

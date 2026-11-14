@@ -1,4 +1,6 @@
 """Is each company alive today? Search the past year, keep only results about THIS company, ask the LLM."""
+import re
+from datetime import datetime
 from urllib.parse import urlparse
 
 import llm
@@ -26,8 +28,52 @@ def relevant(results: list[dict], name: str, website: str) -> list[dict]:
     return keep
 
 
+_YM = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+
+def norm_date(v) -> str:
+    """page_age -> 'YYYY-MM-DD' when it parses, else ''."""
+    t = str(v or "").strip()
+    m = re.match(r"^(\d{4}-\d{2}-\d{2})", t)
+    if m:
+        try:
+            datetime.strptime(m.group(1), "%Y-%m-%d")
+            return m.group(1)
+        except ValueError:
+            return ""
+    for fmt in ("%B %d, %Y", "%b %d, %Y", "%d %B %Y", "%d %b %Y"):
+        try:
+            return datetime.strptime(t, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+    return ""
+
+
+def stage_fields(out: dict, by_url: dict, status_: str, signal_url) -> dict:
+    """stage/funding/ticker/stage_url, only when found, valid, and backed by a retrieved URL."""
+    import pipeline  # late import: pipeline imports status
+    found = {}
+    surl = out.get("stage_url")
+    if surl and surl in by_url:
+        st = pipeline.clean_stage(out.get("stage"))
+        if st != "unknown":
+            found["stage"] = st
+        f = pipeline.clean_funding(out.get("funding"))
+        if f:
+            found["funding"] = f
+        t = pipeline.clean_ticker(out.get("ticker"))
+        if t:
+            found["ticker"] = t
+        if found:
+            found["stage_url"] = surl
+    if status_ == "shut_down":
+        found["stage"] = "shut_down"
+        found.setdefault("stage_url", signal_url or "")
+    return found
+
+
 async def check_status(client, sem, u: dict) -> dict:
-    base = {"type": "status", "id": u["id"]}
+    base = {"type": "status", "id": u["id"], "event_date": "", "source_date": "", "signal_date": ""}
     try:
         res = await you.search(client, f'"{u["name"]}" funding OR launch OR shut down OR acquired',
                                count=6, freshness="year")
@@ -46,13 +92,22 @@ async def check_status(client, sem, u: dict) -> dict:
                                           domains=domains)
         except Exception:  # noqa: BLE001
             return {**base, "status": "unknown", "signal": ""}
+    out = out if isinstance(out, dict) else {}
     by_url = {i["url"]: i for i in items}
     src = by_url.get(out.get("signal_url"))
+    st = out.get("status", "unknown") if src else "unknown"
+    src_date = norm_date((src or {}).get("date"))
+    ev_date = str(out.get("event_date") or "").strip() if src else ""
+    if not _YM.match(ev_date) or (src_date and ev_date > src_date[:7]):
+        ev_date = ""  # malformed, or after the page that reports it
     return {
         **base,
-        "status": out.get("status", "unknown") if src else "unknown",
+        "status": st,
         "signal": out.get("signal", "") if src else "",
         "signal_url": src["url"] if src else None,  # receipt: must be a URL we actually retrieved
-        "signal_date": (src or {}).get("date"),
+        "event_date": ev_date,
+        "source_date": src_date,
+        "signal_date": src_date,
         "conflict": out.get("conflict", ""),
+        **stage_fields(out, by_url, st, src["url"] if src else None),
     }
