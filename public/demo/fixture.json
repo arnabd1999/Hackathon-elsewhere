@@ -1,0 +1,365 @@
+{
+  "slug": "fixture",
+  "idea": "A service that lets restaurants sell surplus food to nearby people at a discount before closing",
+  "events": [
+    {
+      "at": 800,
+      "event": {
+        "type": "concept",
+        "concept": "Sell perishable inventory at a discount shortly before it expires",
+        "originalIndustry": "Restaurants"
+      }
+    },
+    {
+      "at": 1400,
+      "event": {
+        "type": "industry",
+        "industry": {
+          "id": "airlines",
+          "name": "Airlines: last-minute seats",
+          "why": "Perishable inventory sold at a discount as departure nears."
+        }
+      }
+    },
+    {
+      "at": 2000,
+      "event": {
+        "type": "industry",
+        "industry": {
+          "id": "hotels",
+          "name": "Hotels: unsold rooms",
+          "why": "An empty room tonight earns nothing, so late deals fill it."
+        }
+      }
+    },
+    {
+      "at": 2600,
+      "event": {
+        "type": "industry",
+        "industry": {
+          "id": "events",
+          "name": "Events: unsold tickets",
+          "why": "Tickets expire at showtime, so day-of discounts recover revenue."
+        }
+      }
+    },
+    {
+      "at": 3200,
+      "event": {
+        "type": "industry",
+        "industry": {
+          "id": "retail",
+          "name": "Retail: clearance",
+          "why": "Overstock is marked down to move before it loses value."
+        }
+      }
+    },
+    {
+      "at": 3800,
+      "event": {
+        "type": "industry",
+        "industry": {
+          "id": "energy",
+          "name": "Energy: off-peak power",
+          "why": "Surplus supply is priced low to shift demand to quiet hours."
+        }
+      }
+    },
+    {
+      "at": 4500,
+      "event": {
+        "type": "evidence",
+        "industryId": "airlines",
+        "sources": [
+          {
+            "id": "s1",
+            "url": "https://example.com/sample/1",
+            "title": "Sample: Airlines: last-minute seats article 1",
+            "snippet": "Sample snippet about Airlines: last-minute seats."
+          },
+          {
+            "id": "s2",
+            "url": "https://example.com/sample/2",
+            "title": "Sample: Airlines: last-minute seats article 2",
+            "snippet": "Sample snippet about Airlines: last-minute seats."
+          }
+        ]
+      }
+    },
+    {
+      "at": 5400,
+      "event": {
+        "type": "evidence",
+        "industryId": "hotels",
+        "sources": [
+          {
+            "id": "s3",
+            "url": "https://example.com/sample/3",
+            "title": "Sample: Hotels: unsold rooms article 3",
+            "snippet": "Sample snippet about Hotels: unsold rooms."
+          },
+          {
+            "id": "s4",
+            "url": "https://example.com/sample/4",
+            "title": "Sample: Hotels: unsold rooms article 4",
+            "snippet": "Sample snippet about Hotels: unsold rooms."
+          }
+        ]
+      }
+    },
+    {
+      "at": 6300,
+      "event": {
+        "type": "evidence",
+        "industryId": "events",
+        "sources": [
+          {
+            "id": "s5",
+            "url": "https://example.com/sample/5",
+            "title": "Sample: Events: unsold tickets article 5",
+            "snippet": "Sample snippet about Events: unsold tickets."
+          },
+          {
+            "id": "s6",
+            "url": "https://example.com/sample/6",
+            "title": "Sample: Events: unsold tickets article 6",
+            "snippet": "Sample snippet about Events: unsold tickets."
+          }
+        ]
+      }
+    },
+    {
+      "at": 7200,
+      "event": {
+        "type": "evidence",
+        "industryId": "retail",
+        "sources": [
+          {
+            "id": "s7",
+            "url": "https://example.com/sample/7",
+            "title": "Sample: Retail: clearance article 7",
+            "snippet": "Sample snippet about Retail: clearance."
+          },
+          {
+            "id": "s8",
+            "url": "https://example.com/sample/8",
+            "title": "Sample: Retail: clearance article 8",
+            "snippet": "Sample snippet about Retail: clearance."
+          }
+        ]
+      }
+    },
+    {
+      "at": 8100,
+      "event": {
+        "type": "evidence",
+        "industryId": "energy",
+        "sources": [
+          {
+            "id": "s9",
+            "url": "https://example.com/sample/9",
+            "title": "Sample: Energy: off-peak power article 9",
+            "snippet": "Sample snippet about Energy: off-peak power."
+          },
+          {
+            "id": "s10",
+            "url": "https://example.com/sample/10",
+            "title": "Sample: Energy: off-peak power article 10",
+            "snippet": "Sample snippet about Energy: off-peak power."
+          }
+        ]
+      }
+    },
+    {
+      "at": 9500,
+      "event": {
+        "type": "evidence",
+        "industryId": null,
+        "sources": [
+          {
+            "id": "s11",
+            "url": "https://example.com/sample/11",
+            "title": "Sample: consumer demand article 11",
+            "snippet": "Sample snippet about consumer demand."
+          },
+          {
+            "id": "s12",
+            "url": "https://example.com/sample/12",
+            "title": "Sample: consumer demand article 12",
+            "snippet": "Sample snippet about consumer demand."
+          }
+        ]
+      }
+    },
+    {
+      "at": 10500,
+      "event": {
+        "type": "evidence",
+        "industryId": null,
+        "sources": [
+          {
+            "id": "s13",
+            "url": "https://example.com/sample/13",
+            "title": "Sample: startup failures article 13",
+            "snippet": "Sample snippet about startup failures."
+          },
+          {
+            "id": "s14",
+            "url": "https://example.com/sample/14",
+            "title": "Sample: startup failures article 14",
+            "snippet": "Sample snippet about startup failures."
+          }
+        ]
+      }
+    },
+    {
+      "at": 12000,
+      "event": {
+        "type": "card",
+        "card": {
+          "kind": "feasibility",
+          "title": "Feasibility: it works elsewhere",
+          "summary": "Sample summary: the core pattern is proven in several industries.",
+          "claims": [
+            {
+              "text": "Sample claim: airlines price seats dynamically up to departure.",
+              "sourceIds": [
+                "s1"
+              ]
+            },
+            {
+              "text": "Sample claim: hotels discount rooms late in the day.",
+              "sourceIds": [
+                "s3"
+              ]
+            },
+            {
+              "text": "Sample claim: event tickets are discounted on the day.",
+              "sourceIds": [
+                "s5"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "at": 20000,
+      "event": {
+        "type": "card",
+        "card": {
+          "kind": "demand",
+          "title": "Demand: shoppers like deals",
+          "summary": "Sample summary: buyers respond to time-limited discounts.",
+          "claims": [
+            {
+              "text": "Sample claim: shoppers seek out clearance deals.",
+              "sourceIds": [
+                "s7"
+              ]
+            },
+            {
+              "text": "Sample claim: consumers report interest in discounted surplus.",
+              "sourceIds": [
+                "s11"
+              ]
+            },
+            {
+              "text": "Sample claim: off-peak pricing shifts behavior.",
+              "sourceIds": [
+                "s9"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "at": 27000,
+      "event": {
+        "type": "card",
+        "card": {
+          "kind": "features",
+          "title": "Features worth borrowing",
+          "summary": "Sample summary: a few mechanics recur across industries.",
+          "claims": [
+            {
+              "text": "Sample claim: a countdown clock creates urgency.",
+              "sourceIds": [
+                "s2"
+              ]
+            },
+            {
+              "text": "Sample claim: tiered discounts rise as the deadline nears.",
+              "sourceIds": [
+                "s4"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "at": 34000,
+      "event": {
+        "type": "card",
+        "card": {
+          "kind": "failures",
+          "title": "Where it went wrong",
+          "summary": "Sample summary: common pitfalls to avoid.",
+          "claims": [
+            {
+              "text": "Sample claim: deep discounts can train customers to wait.",
+              "sourceIds": [
+                "s13"
+              ]
+            },
+            {
+              "text": "Sample claim: thin margins break the model at low volume.",
+              "sourceIds": [
+                "s14"
+              ]
+            },
+            {
+              "text": "Sample claim: unreliable inventory data hurts trust.",
+              "sourceIds": [
+                "s6"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "at": 40000,
+      "event": {
+        "type": "card",
+        "card": {
+          "kind": "collaborators",
+          "title": "Possible collaborators",
+          "summary": "Sample summary: example partner types, all fictional.",
+          "claims": [
+            {
+              "text": "Sample claim: a payments partner could handle checkout.",
+              "sourceIds": [
+                "s8"
+              ]
+            },
+            {
+              "text": "Sample claim: a utility-style scheduler could time offers.",
+              "sourceIds": [
+                "s10"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "at": 42000,
+      "event": {
+        "type": "done"
+      }
+    }
+  ]
+}
