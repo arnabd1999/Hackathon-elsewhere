@@ -155,7 +155,7 @@
   #headline{position:absolute;left:200px;right:200px;top:16px;z-index:3;text-align:center;pointer-events:none;opacity:0;transition:opacity .5s}
   body.running #headline{opacity:1}
   #headline .big{font-size:17px;font-weight:500;letter-spacing:.2px;line-height:1.4;color:var(--dim)}
-  body.running .brand small{display:none}
+  .brand small{display:none}
   #demos{max-width:190px;color:var(--dim)}
   #legend{position:absolute;left:18px;bottom:16px;z-index:3;display:flex;gap:16px;font-size:12px;color:var(--dim);opacity:0;transition:opacity .5s}
   body.running #legend{opacity:1}
@@ -192,32 +192,29 @@
   #hero{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
     padding:24px;transition:opacity .6s,transform .8s cubic-bezier(.2,.8,.2,1)}
   body.running #hero{opacity:0;transform:translateY(-30px) scale(.98);pointer-events:none}
-  body.started #hero,body.started #cards{display:none}
-  #hero .eyebrow{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--sun);font-weight:600;margin-bottom:28px}
-  #hero h1{margin:0 0 34px;font-weight:300;text-transform:uppercase;line-height:1.15}
-  #hero h1 .l1{display:block;font-size:clamp(15px,1.9vw,24px);letter-spacing:.42em;margin-bottom:20px;color:#d3d3d3;margin-bottom:10px;padding-left:.42em}
-  #hero h1 em{display:block;font-size:clamp(48px,9vw,120px);letter-spacing:.22em;padding-left:.22em;font-weight:300}
-  #hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--sun),#b0b0b0 40%,var(--insp));-webkit-background-clip:text;background-clip:text;color:transparent}
-  #hero p{color:var(--dim);font-size:17px;line-height:1.65;max-width:600px;margin:0 0 40px}
-  .bigsearch{display:flex;gap:8px;width:min(720px,100%);background:rgba(18,18,18,.85);border:1px solid var(--line2);border-radius:16px;padding:8px;
-    box-shadow:0 0 0 6px rgba(255,211,107,.04),0 20px 60px #0009}
-  .bigsearch input{flex:1;background:transparent;border:none;outline:none;padding:10px 12px;font-size:16px;min-width:0}
-  .bigsearch .btn{padding:12px 20px;font-size:15px;border-radius:11px}
+  body.started #hero{display:none}
+  /* hero: one tight sentence, quiet subtext, one input (Linear / Vercel style) */
+  #hero .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);margin-bottom:28px}
+  #hero .eyebrow b{color:var(--text);font-weight:500}
+  #hero .eyebrow i{width:6px;height:6px;border-radius:50%;background:var(--sun);box-shadow:0 0 10px var(--sun)}
+  #hero h1{margin:0 0 22px;font-size:clamp(40px,6vw,80px);font-weight:600;letter-spacing:-.045em;line-height:1.02;max-width:900px;
+    background:linear-gradient(180deg,#fff 30%,#8d8d8d);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #hero h1 em{font-style:normal;background:linear-gradient(180deg,#ffe08a,#e9a514);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #hero p{color:var(--dim);font-size:18px;line-height:1.55;max-width:560px;margin:0 0 36px;letter-spacing:-.01em}
+  .bigsearch{display:flex;gap:6px;width:min(620px,100%);background:rgba(16,16,16,.9);border:1px solid var(--line);border-radius:12px;padding:6px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 20px 60px #000a;transition:border-color .2s}
+  .bigsearch:focus-within{border-color:var(--line2)}
+  .bigsearch input{flex:1;background:transparent;border:none;outline:none;padding:10px 12px;font-size:15px;min-width:0}
+  .bigsearch .btn{padding:10px 18px;font-size:14px;border-radius:8px;background:#fff;color:#000;font-weight:600}
+  .bigsearch .btn:hover{background:var(--sun)}
+  body.landing .ringlbl,body.focus .ringlbl{display:none}
+  .dart:focus{outline:none} .dart:focus-visible .body{stroke:var(--sun);stroke-width:3}
   .examples{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px;max-width:760px}
   .examples button{font-size:12.5px;background:rgba(18,18,18,.7);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--dim)}
   .examples button:hover{color:var(--text);border-color:var(--line2)}
   .threeup{display:flex;gap:28px;margin-top:38px;color:var(--dim);font-size:13px;flex-wrap:wrap;justify-content:center}
   .threeup b{color:var(--text)}
 
-  #cards{position:absolute;inset:0;z-index:3;pointer-events:none;perspective:1200px;transition:opacity .6s}
-  body.running #cards{opacity:0}
-  .pc{position:absolute;width:210px;padding:12px 14px;border-radius:10px;background:linear-gradient(160deg,rgba(32,32,32,.9),rgba(14,14,14,.9));
-    border:1px solid #323232;box-shadow:0 30px 60px #000a;font-size:11.5px;color:var(--dim);opacity:.55;
-    -webkit-box-reflect:below 4px linear-gradient(transparent 70%,rgba(255,255,255,.08));animation:drift 14s ease-in-out infinite alternate}
-  .pc b{display:block;color:var(--text);font-size:14px;margin-bottom:2px} .pc i{font-style:normal;font-size:10px;letter-spacing:1.4px;text-transform:uppercase}
-  .pc q{display:block;margin-top:8px;color:#bdbdbd;font-style:italic}
-  @keyframes drift{from{transform:var(--t) translateY(0)}to{transform:var(--t) translateY(-18px)}}
-  @media (max-width:960px){ #cards{display:none} }
   /* ---------- right panel ---------- */
   .rank{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px;border:1px solid transparent;border-radius:12px;cursor:pointer;transition:background .2s,border-color .2s}
   .rank:hover,.rank.hov{background:rgba(35,35,35,.6);border-color:var(--line)}
@@ -270,15 +267,6 @@
   #globe,#grave{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s}
   #globe{width:100%;height:100%;display:block}
   /* focus mode: a ghosted preview of the selected startup fills the background; everything else steps back */
-  #backdrop{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 5vw 110px;pointer-events:none;
-    opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
-  body.focus #backdrop{opacity:1;transform:none}
-  body[data-view=grave] #backdrop{display:none}
-  @media (min-width:961px){ body.show-right #backdrop{right:390px} }
-  #backdrop .bk-ind{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,207,74,.42);font-weight:600}
-  #backdrop .bk-name{font-size:clamp(64px,10vw,168px);font-weight:800;letter-spacing:-.045em;line-height:.95;margin:8px 0 16px;
-    color:rgba(255,255,255,.05);-webkit-text-stroke:1px rgba(255,255,255,.09);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #backdrop .bk-line{max-width:520px;font-size:17px;line-height:1.5;color:rgba(255,255,255,.22)}
   body.focus .dart:not(.sel){opacity:.22}
   body.focus .dart:not(.sel):hover{opacity:1}
   body.focus .cluster{opacity:.45}
@@ -401,7 +389,6 @@
   </aside>
 
   <section id="stage">
-    <div id="backdrop" aria-hidden="true"><div class="bk-ind" id="bkInd"></div><div class="bk-name" id="bkName"></div><div class="bk-line" id="bkLine"></div></div>
     <svg id="board" viewBox="-30 -120 1060 1150" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Dartboard of similar companies">
       <defs>
         <radialGradient id="sunGrad"><stop offset="0" stop-color="#fff3c9"/><stop offset=".55" stop-color="#ffd36b"/><stop offset="1" stop-color="#ff9f45"/></radialGradient>
@@ -438,14 +425,13 @@
     <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
     <div id="tip"></div>
 
-    <div id="cards" aria-hidden="true"></div>
     <div id="hero">
-      <div class="eyebrow">Find your inspirations &amp; collaborators</div>
-      <h1><span class="l1">Your idea already exists</span><em>Elsewhere</em></h1>
-      <p>Somewhere, someone has already solved a version of your problem, often in an industry you'd never think to search. Find who to learn from, and who to build with.</p>
+      <div class="eyebrow"><i></i><b>Elsewhere</b> · inspirations, partners and lessons from other industries</div>
+      <h1>Your idea already exists <em>elsewhere.</em></h1>
+      <p>Find who solved your problem in another industry, who you could build with, and who tried and failed.</p>
       <form class="bigsearch" id="heroForm">
-        <input id="idea" aria-label="Describe your idea" placeholder="e.g. an SMS assistant that helps NYC deli owners track daily cash flow" autofocus>
-        <button class="btn primary" type="submit">Find my multiverse →</button>
+        <input id="idea" aria-label="Describe your idea" placeholder="Describe your idea in one sentence…" autofocus>
+        <button class="btn" type="submit">Explore →</button>
       </form>
       <div class="examples" id="examples"></div>
     </div>
@@ -566,7 +552,7 @@ function autoFocus(){
 }
 function focusBox(u){
   // centre between you and the planet, leaning toward the planet, and tighter than before
-  const mx = C + (u.x - C) * .62, my = C + (u.y - C) * .62, w = Math.max(500, Math.hypot(u.x - C, u.y - C) * 1.75), h = w * VB0[3] / VB0[2];
+  const mx = C + (u.x - C) * .62, my = C + (u.y - C) * .62, w = Math.max(640, Math.hypot(u.x - C, u.y - C) * 1.85), h = w * VB0[3] / VB0[2];
   return [mx - w / 2, my - h / 2 + 30, w, h];
 }
 
@@ -755,8 +741,6 @@ function select(id){
   const f = el("path", {d:p.getAttribute("d"), class:"flow keep"}, $("trails"));
   if (u.kind !== "inspiration") f.style.stroke = "#fff";
   S.selected = id; renderDetail(u); document.body.classList.add("show-right"); $("right").scrollTop = 0;
-  $("bkInd").textContent = u.kind === "inspiration" ? `Elsewhere · ${u.industry || "other industry"}` : u.relationship === "competitor" ? "Competitor" : "Possible partner";
-  $("bkName").textContent = u.name; $("bkLine").textContent = u.one_liner || "";
   document.body.classList.add("focus");
   if (S.view === "elsewhere") flyTo(focusBox(u));
   if (S.view === "world") globeFocus(u);
@@ -1007,13 +991,6 @@ async function loadDemos(){
   } catch {}
 }
 $("mockbadge").hidden = !CONFIG.USE_MOCK;
-const CARDS = [
-  ["HarvestFlow","Farming","texts farmers ten days before money runs out","8%","14%","rotateY(24deg) rotateZ(-6deg)","var(--insp)"],
-  ["Ledgerly","Same idea · Chicago","text us your sales at closing time","74%","10%","rotateY(-26deg) rotateZ(5deg)","var(--collab)"],
-  ["Steady Gig","Gig work","one number: what's safe to spend today","4%","64%","rotateY(30deg) rotateZ(4deg)","var(--insp)"],
-  ["Shoebox","Shut down · 2025","churn without in-person support","78%","66%","rotateY(-22deg) rotateZ(-7deg)","var(--dead)"],
-];
-$("cards").innerHTML = CARDS.map(([n,k,q,x,y,t,c],i) => `<div class="pc" style="left:${x};top:${y};--t:${t};animation-delay:-${i*3}s"><i style="color:${c}">${k}</i><b>${n}</b><q>${q}</q></div>`).join("");
 drawStars(); reset(); loadDemos();
 </script>
 </body>
