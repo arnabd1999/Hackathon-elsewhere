@@ -40,6 +40,9 @@
   .search input::placeholder{color:var(--faint)}
   .search .go{border:1px solid var(--line);background:#141414;color:var(--dim);border-radius:6px;width:26px;height:24px;cursor:pointer;font-size:12px;
     display:grid;place-items:center;transition:all .2s}
+  #sound{border:1px solid var(--line);background:none;color:var(--dim);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;flex:none;transition:all .2s}
+  #sound:hover{color:var(--text);border-color:var(--line2)}
+  #sound.off{color:var(--faint);text-decoration:line-through}
   .search .go:hover{color:#1a1405;background:var(--sun);border-color:var(--sun)}
   #demos{background:none;border:1px solid transparent;color:var(--dim);font-size:13px;padding:7px 10px}
   #demos:hover{border-color:var(--line)}
@@ -424,6 +427,7 @@
     <button class="go" id="goTop" type="submit" aria-label="Explore">↵</button>
   </form>
   <select id="demos" aria-label="Replay a recorded run"><option value="">Replay a run…</option></select>
+  <button id="sound" type="button" aria-label="Mute music" title="Music on / off">♪</button>
   <span class="mockbadge" id="mockbadge" hidden>Mock data</span>
 </header>
 
@@ -1142,6 +1146,47 @@ function onAnalysis(ev){
   $("meansWrap").hidden = !(m || ev.summary);
 }
 
+/* ---------- ambient music: a soft generated pad, no audio file ---------- */
+const Music = (() => {
+  let ctx = null, master = null;
+  let muted = false; try { muted = localStorage.getItem("elsewhere-muted") === "1"; } catch {}
+  const VOL = .05;
+  function build(){
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0;
+    // light reverb from a decaying noise impulse
+    const len = ctx.sampleRate * 3, imp = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++){ const d = imp.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5); }
+    const verb = ctx.createConvolver(); verb.buffer = imp;
+    const filt = ctx.createBiquadFilter(); filt.type = "lowpass"; filt.frequency.value = 900; filt.Q.value = .4;
+    const lfo = ctx.createOscillator(), lfoAmt = ctx.createGain(); lfo.frequency.value = .05; lfoAmt.gain.value = 500;
+    lfo.connect(lfoAmt).connect(filt.frequency); lfo.start();
+    const wet = ctx.createGain(); wet.gain.value = .6;
+    filt.connect(master); filt.connect(verb).connect(wet).connect(master); master.connect(ctx.destination);
+    // A minor 9 voicing, each voice drifting slowly in and out
+    [110, 164.81, 196, 246.94, 261.63].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(), sway = ctx.createOscillator(), swayAmt = ctx.createGain();
+      o.type = i % 2 ? "triangle" : "sine"; o.frequency.value = f; o.detune.value = (i - 2) * 4;
+      g.gain.value = .16; sway.frequency.value = .03 + i * .013; swayAmt.gain.value = .1;
+      sway.connect(swayAmt).connect(g.gain); sway.start(); o.connect(g).connect(filt); o.start();
+    });
+  }
+  function apply(){
+    const b = $("sound"); b.classList.toggle("off", muted); b.setAttribute("aria-label", muted ? "Play music" : "Mute music");
+    if (!ctx) return; const t = ctx.currentTime;
+    master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t);
+    master.gain.linearRampToValueAtTime(muted ? 0 : VOL, t + (muted ? .4 : 3));
+  }
+  return {
+    start(){ try { if (!ctx) build(); if (ctx.state === "suspended") ctx.resume(); apply(); } catch {} },
+    toggle(){ muted = !muted; try { localStorage.setItem("elsewhere-muted", muted ? "1" : "0"); } catch {} this.start(); },
+    init(){ apply(); $("sound").onclick = () => this.toggle();
+      // browsers only allow sound after a user gesture: start on the first click anywhere
+      document.addEventListener("pointerdown", () => this.start(), {once:true}); },
+  };
+})();
+Music.init();
+
 /* ---------- run ---------- */
 function handle(ev){
   if (ev.type === "stage") setTicker(ev.msg);
@@ -1167,6 +1212,7 @@ function forgetRun(){
   document.body.classList.remove("running", "started"); document.body.classList.add("landing");
 }
 async function start(kind, arg, idea){
+  Music.start();
   document.body.classList.remove("landing"); document.body.classList.add("running");
   // remove the start screen once its fade is done; a timer still fires in background tabs, where CSS transitions can stall
   setTimeout(() => document.body.classList.add("started"), 900);
