@@ -7,6 +7,7 @@
 // BACKEND TEAM: fill in the TODO bodies in `RealAPI`, then flip USE_MOCK to
 // false (or open the page with ?live=1). Keep the event shapes documented
 // below; the UI depends on them.
+// RealAPI is wired to server.py: /api/explore, /api/replay (SSE), /api/demos, /api/deep-dive.
 //
 // Event shapes (streamed in this order, same as pipeline.py):
 //   {type:"stage",   msg}
@@ -16,6 +17,7 @@
 //                     relationship:"competitor"|"collaborator", relationship_reason, lesson,
 //                     evidence_quote, verification:"verified"|"partial"|"unverified",
 //                     source_url, source_title, lens, lens_label,
+//                     receipt_url? (link that highlights the quote on the page), name_on_page? (bool),
 //                     similarity? (optional 0-100; UI derives it from divergence when missing)}
 //   {type:"status",  id, status:"thriving"|"active"|"pivoted"|"shut_down"|"quiet"|"unknown",
 //                     signal, signal_url, signal_date, conflict}
@@ -31,34 +33,63 @@ export const CONFIG = {
   BASE_URL: "",
 };
 
-// Real implementations: intentionally left blank for the backend team.
+// Open an SSE stream and forward parsed events. Returns a cancel function.
+// EventSource auto-reconnects on error, so we always close on done/error/onerror
+// (a reconnect would silently start a second paid run).
+// endIsOk: when the stream closes after >=1 event with no done event (replay), end quietly.
+function streamEvents(url, onEvent, endIsOk) {
+  const es = new EventSource(url);
+  let closed = false, got = false;
+  const close = () => { closed = true; es.close(); };
+  es.onmessage = m => {
+    if (closed) return;
+    let ev;
+    try { ev = JSON.parse(m.data); } catch { return; }
+    got = true;
+    if (ev.type === "done" || ev.type === "error") close();
+    onEvent(ev);
+  };
+  es.onerror = () => {
+    if (closed) return;
+    close();
+    if (!(endIsOk && got)) onEvent({ type: "error", msg: "Connection to the server was lost." });
+  };
+  return close;
+}
+
 const RealAPI = {
   /** Start a live run. Call onEvent(ev) for each event; return a function that cancels the run. */
   explore(idea, onEvent) {
-    // TODO(backend): stream /api/explore?idea=... (SSE) and forward each parsed event to onEvent.
-    // Hint: const es = new EventSource(`${CONFIG.BASE_URL}/api/explore?idea=${encodeURIComponent(idea)}`);
-    //       es.onmessage = m => onEvent(JSON.parse(m.data)); return () => es.close();
-    onEvent({ type: "error", msg: "Live API not wired yet (RealAPI.explore in static/api.js)." });
-    return () => {};
+    return streamEvents(`${CONFIG.BASE_URL}/api/explore?idea=${encodeURIComponent(idea)}`, onEvent, false);
   },
 
   /** List recorded runs: [{file, idea}] */
   async listDemos() {
-    // TODO(backend): return (await fetch(`${CONFIG.BASE_URL}/api/demos`)).json();
-    return [];
+    const r = await fetch(`${CONFIG.BASE_URL}/api/demos`);
+    if (!r.ok) throw new Error(`Could not list demos (HTTP ${r.status})`);
+    return r.json();
   },
 
   /** Replay a recorded run with the same event stream as explore(). */
   replay(file, onEvent) {
-    // TODO(backend): stream /api/replay?file=...
-    onEvent({ type: "error", msg: "Replay not wired yet (RealAPI.replay in static/api.js)." });
-    return () => {};
+    return streamEvents(`${CONFIG.BASE_URL}/api/replay?file=${encodeURIComponent(file)}`, onEvent, true);
   },
 
-  /** Stretch: "Why did this universe die?" deep dive. Resolve to {summary, sources:[{title,url}]} */
-  async deepDive(universe) {
-    // TODO(backend): call a /api/deep-dive endpoint backed by the You.com Research API.
-    throw new Error("Deep dive not wired yet (RealAPI.deepDive in static/api.js).");
+  /** "Why did this universe die?" deep dive. Resolves to {summary, sources:[{title,url}]} */
+  async deepDive(u) {
+    const body = {};
+    for (const k of ["name", "one_liner", "website", "status", "signal", "industry"]) body[k] = u[k] ?? "";
+    const r = await fetch(`${CONFIG.BASE_URL}/api/deep-dive`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) {
+      let detail = "";
+      try { const j = await r.json(); detail = typeof j.detail === "string" ? j.detail : ""; } catch {}
+      throw new Error(detail || `Deep dive failed (HTTP ${r.status})`);
+    }
+    return r.json();
   },
 };
 
