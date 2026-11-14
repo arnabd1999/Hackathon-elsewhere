@@ -1,12 +1,44 @@
-"""Provider-agnostic JSON completion. Set LLM_PROVIDER=openai|anthropic.
+"""Provider-agnostic JSON completion. Set LLM_PROVIDER=openai|anthropic|you.
 
 openai:    OPENAI_API_KEY, optional OPENAI_BASE_URL (any OpenAI-compatible server), LLM_MODEL
 anthropic: ANTHROPIC_API_KEY, LLM_MODEL
+you:       YDC_API_KEY only. Uses the You.com Research API (effort YOU_LLM_EFFORT, default "lite")
+           as the model, for keys without Inference Router credits (the router returns 402).
 """
 import json
 import os
 import re
 import httpx
+
+RESEARCH_URL = "https://api.you.com/v1/research"
+# Research answers carry citation markers like [[1, 2]] or [1]; they aren't part of the JSON.
+_CITATION = re.compile(r"\s*\[\[\s*\d+(?:\s*,\s*\d+)*\s*\]\]|\s*\[\d+(?:\s*,\s*\d+)*\]")
+
+
+async def _you_research_text(client: httpx.AsyncClient, system: str, user: str) -> str:
+    """Runs one prompt through the You.com Research API and returns its text answer."""
+    key = os.getenv("YDC_API_KEY")
+    if not key:
+        raise RuntimeError("YDC_API_KEY is not set (see .env.example)")
+    prompt = (
+        f"{system}\n\n"
+        "Answer ONLY from the material below; don't search the web unless the task needs it.\n"
+        "Reply with a single JSON object only: no prose before or after, no markdown, "
+        "no citation markers like [1] or [[1, 2]].\n\n"
+        f"{user}"
+    )
+    r = await client.post(
+        RESEARCH_URL,
+        headers={"X-API-Key": key, "Content-Type": "application/json"},
+        json={"input": prompt, "research_effort": os.getenv("YOU_LLM_EFFORT", "lite")},
+        timeout=90,
+    )
+    if r.status_code >= 400:
+        raise RuntimeError(f"You.com research (as LLM) {r.status_code}: {r.text[:300]}")
+    content = (r.json().get("output") or {}).get("content")
+    if isinstance(content, (dict, list)):
+        return json.dumps(content)
+    return _CITATION.sub("", str(content or ""))
 
 
 def _parse_json(text: str):
@@ -42,6 +74,8 @@ async def complete_json(client: httpx.AsyncClient, system: str, user: str, max_t
         if r.status_code >= 400:
             raise RuntimeError(f"Anthropic {r.status_code}: {r.text[:300]}")
         text = "".join(b.get("text", "") for b in r.json()["content"])
+    elif provider == "you":
+        text = await _you_research_text(client, system, user)
     else:
         base = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
         r = await client.post(
