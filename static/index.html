@@ -32,10 +32,18 @@
   .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px;font-size:16px;white-space:nowrap}
   .brand .logo{width:22px;height:22px}
   .brand small{color:var(--dim);font-weight:500;font-size:13px}
-  .search{flex:1;display:flex;gap:8px;max-width:820px;opacity:0;pointer-events:none;transition:opacity .4s}
+  .search{flex:1;display:flex;align-items:center;gap:8px;max-width:520px;margin:0 auto;opacity:0;pointer-events:none;transition:opacity .4s,border-color .2s;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;padding:0 6px 0 12px;height:36px;color:var(--faint)}
   body.running .search{opacity:1;pointer-events:auto}
-  .search input{flex:1;background:var(--panel-solid);border:1px solid var(--line);border-radius:10px;padding:9px 14px;outline:none}
-  .search input:focus{border-color:var(--line2)}
+  .search:focus-within{border-color:var(--line2);color:var(--dim)}
+  .search input{flex:1;background:none;border:0;outline:none;padding:0;font-size:13.5px;min-width:0;color:var(--text);text-overflow:ellipsis}
+  .search input::placeholder{color:var(--faint)}
+  .search .go{border:1px solid var(--line);background:#141414;color:var(--dim);border-radius:6px;width:26px;height:24px;cursor:pointer;font-size:12px;
+    display:grid;place-items:center;transition:all .2s}
+  .search .go:hover{color:#1a1405;background:var(--sun);border-color:var(--sun)}
+  #demos{background:none;border:1px solid transparent;color:var(--dim);font-size:13px;padding:7px 10px}
+  #demos:hover{border-color:var(--line)}
+  .mockbadge{font-size:10px!important;padding:3px 8px!important}
   .btn{background:var(--panel-solid);border:1px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;white-space:nowrap}
   .btn:hover{border-color:var(--line2)}
   .btn.primary{background:linear-gradient(180deg,var(--sun),var(--sun2));color:#1a1405;border:none;font-weight:700}
@@ -261,6 +269,14 @@
   /* ---------- views ---------- */
   #globe,#grave{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s}
   #globe{width:100%;height:100%;display:block}
+  /* zoomed in: names become readable; a single control takes you back out */
+  body.zoomed .dart .lbl{opacity:.92}
+  #seeall{position:absolute;left:50%;bottom:54px;z-index:4;transform:translate(-50%,8px);opacity:0;pointer-events:none;
+    background:rgba(16,16,16,.9);border:1px solid var(--line2);color:var(--text);border-radius:999px;padding:8px 16px;font-size:13px;cursor:pointer;
+    backdrop-filter:blur(10px);transition:opacity .3s,transform .3s,border-color .2s}
+  #seeall:hover{border-color:var(--sun)}
+  body.zoomed[data-view=elsewhere] #seeall{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+  @media (min-width:961px){ body.show-right #seeall{left:calc(50% - 195px)} }
   #legend .sep{width:1px;height:12px;background:var(--line2)}
   #legend .pulse-i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--dim);box-shadow:0 0 0 3px rgba(255,255,255,.08)}
   #globe{cursor:grab;touch-action:none} #globe.drag{cursor:grabbing} #globe.hot{cursor:pointer}
@@ -348,11 +364,11 @@
     Elsewhere <small>· your idea's multiverse</small>
   </div>
   <form class="search" id="topForm">
-    <input id="ideaTop" aria-label="Describe your idea" placeholder="Describe another idea…">
-    <button class="btn primary" id="goTop" type="submit">Explore</button>
+    <svg class="sicon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <input id="ideaTop" aria-label="Describe your idea" placeholder="Try another idea…">
+    <button class="go" id="goTop" type="submit" aria-label="Explore">↵</button>
   </form>
-  <div class="spacer"></div>
-  <select class="btn" id="demos" aria-label="Replay a recorded run"><option value="">Replay a run…</option></select>
+  <select id="demos" aria-label="Replay a recorded run"><option value="">Replay a run…</option></select>
   <span class="mockbadge" id="mockbadge" hidden>Mock data</span>
 </header>
 
@@ -400,6 +416,7 @@
     </div>
     <button class="corner" id="openLeft" type="button">◎ Your idea</button>
     <button class="corner" id="openRight" type="button">☰ List</button>
+    <button id="seeall" type="button">⤢ See all</button>
     <div id="legend"><span><i class="dot" style="background:var(--insp)"></i>Other industry</span><span><i class="dot" style="background:var(--collab)"></i>Partner</span><span><i class="dot" style="background:var(--comp)"></i>Competitor</span>
       <i class="sep"></i><span><i class="pulse-i"></i>Growing</span><span>✕ Shut down</span><span style="opacity:.45">● Unverified</span></div>
     <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
@@ -502,9 +519,34 @@ function flyTo(target, ms = 1000){
   const from = vb.slice(), t0 = performance.now(); cancelAnimationFrame(vbRaf);
   const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const step = now => { const k = Math.min(1, (now - t0) / ms), e = ease(k);
-    vb = from.map((v, i) => v + (target[i] - v) * e); $("board").setAttribute("viewBox", vb.join(" "));
+    setVB(from.map((v, i) => v + (target[i] - v) * e));
     if (k < 1) vbRaf = requestAnimationFrame(step); };
   vbRaf = requestAnimationFrame(step);
+}
+function setVB(b){ vb = b; $("board").setAttribute("viewBox", vb.join(" ")); document.body.classList.toggle("zoomed", vb[2] < VB0[2] * .85); }
+function zoomOut(){ if (S.selected || document.body.classList.contains("show-right")) closeDrawer("right"); flyTo(VB0, 800); }
+// scroll to zoom around the cursor
+$("board").addEventListener("wheel", e => {
+  if (!document.body.classList.contains("running") || S.view !== "elsewhere") return;
+  e.preventDefault(); S.touched = true; cancelAnimationFrame(vbRaf);
+  const pt = $("board").createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform($("board").getScreenCTM().inverse());
+  const w = Math.max(380, Math.min(VB0[2], vb[2] * Math.exp(e.deltaY * .0015)));
+  if (w >= VB0[2]) return setVB(VB0.slice());
+  const k = w / vb[2], h = vb[3] * k;
+  setVB([p.x - (p.x - vb[0]) * k, p.y - (p.y - vb[1]) * k, w, h]);
+}, {passive:false});
+// clicking empty space zooms back out
+$("board").addEventListener("click", e => {
+  if (!e.target.closest(".dart") && document.body.classList.contains("zoomed")) zoomOut();
+});
+// after a run, open on the most useful other-industry match so the first screen tells a story
+function autoFocus(){
+  if (S.touched || S.selected) return;
+  const rank = {thriving:3, active:2, pivoted:1};
+  const best = Object.values(S.u).filter(u => u.kind === "inspiration")
+    .sort((a, b) => ((b.verification === "verified") * 4 + (rank[b.status] || 0) + !!b.transfer) - ((a.verification === "verified") * 4 + (rank[a.status] || 0) + !!a.transfer))[0];
+  if (best) select(best.id);
 }
 function focusBox(u){
   const mx = (C + u.x) / 2, my = (C + u.y) / 2, w = Math.max(620, Math.hypot(u.x - C, u.y - C) * 2.1), h = w * VB0[3] / VB0[2];
@@ -531,7 +573,7 @@ function reset(){
   if (cancel) cancel();
   S = {core:null, u:{}, order:[], slot:{}, indAngle:{}, indCount:{}, selected:null, listOpen:false, filter:"all", view:"elsewhere", done:false, stage:""};
   document.body.classList.remove("show-left", "show-right"); document.body.dataset.view = "elsewhere"; stopGlobe();
-  cancelAnimationFrame(vbRaf); vb = VB0.slice(); $("board").setAttribute("viewBox", vb.join(" "));
+  cancelAnimationFrame(vbRaf); setVB(VB0.slice());
   $("darts").innerHTML = ""; $("trails").innerHTML = ""; $("clusters").innerHTML = ""; $("grave").innerHTML = "";
   $("core").textContent = "…"; $("mech").textContent = "…"; $("choices").innerHTML = ""; $("queries").innerHTML = ""; $("qsum").textContent = "0 live searches";
   drawBoard(null); renderHeadline(); renderRight();
@@ -578,7 +620,7 @@ function onUniverse(ev){
   el("path", {d:"M-5,-5 L5,5 M5,-5 L-5,5", class:"x"}, g);
   const t = el("text", {y:30, "text-anchor":"middle", class:"lbl"}, g); t.textContent = u.name.length > 18 ? u.name.slice(0,17) + "…" : u.name;
   u.g = g; u.body = body;
-  g.addEventListener("click", () => select(u.id));
+  g.addEventListener("click", () => { S.touched = true; select(u.id); });
   g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(u.id); } });
   g.addEventListener("mouseenter", () => hover(u.id, true)); g.addEventListener("mouseleave", () => hover(u.id, false));
   requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transform = `translate(${x}px,${y}px)`; g.style.opacity = ""; }));
@@ -618,6 +660,7 @@ function renderHeadline(){
 const isDead = u => u.status === "shut_down" || u.lens === "graveyard";
 function setView(v){
   if (S.view === v) return;
+  S.touched = true;
   S.view = v; document.body.dataset.view = v;
   if (v !== "elsewhere") flyTo(VB0, 500); else if (S.selected) flyTo(focusBox(S.u[S.selected]));
   if (v === "world") startGlobe(); else stopGlobe();
@@ -917,7 +960,7 @@ function handle(ev){
   else if (ev.type === "core") onCore(ev);
   else if (ev.type === "universe") onUniverse(ev);
   else if (ev.type === "status") onStatus(ev);
-  else if (ev.type === "done"){ S.done = true; renderGrave(); setTicker(`Done · ${ev.count} universes found and checked`, true); loadDemos(); }
+  else if (ev.type === "done"){ S.done = true; renderGrave(); setTimeout(autoFocus, 700); setTicker(`Done · ${ev.count} universes found and checked`, true); loadDemos(); }
   else if (ev.type === "error"){ setTicker("Error: " + ev.msg, true); $("ticker").style.borderColor = "var(--comp)"; }
 }
 async function start(kind, arg, idea){
@@ -934,7 +977,8 @@ $("examples").innerHTML = EXAMPLES.map(x => `<button type="button">${esc(x)}</bu
 $("examples").querySelectorAll("button").forEach(b => b.onclick = () => { $("idea").value = b.textContent; submit(b.textContent); });
 $("demos").onchange = e => { const o = e.target.selectedOptions[0]; if (!o.value) return; start("replay", o.value, o.dataset.idea); e.target.value = ""; };
 document.addEventListener("keydown", e => { if (e.key === "Escape"){ closeDrawer("left"); closeDrawer("right"); } });
-$("openLeft").onclick = () => { document.body.classList.toggle("show-left"); };
+$("seeall").onclick = () => { S.touched = true; zoomOut(); };
+$("openLeft").onclick =() => { document.body.classList.toggle("show-left"); };
 $("openRight").onclick = () => { document.body.classList.contains("show-right") && !S.selected ? closeDrawer("right") : openList(); };
 document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeDrawer(b.dataset.close));
 async function loadDemos(){
