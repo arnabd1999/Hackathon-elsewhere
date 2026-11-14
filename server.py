@@ -25,6 +25,12 @@ except ImportError:
 import you  # noqa: E402
 from pipeline import explore  # noqa: E402
 
+# Privacy: the idea travels in the URL (/api/explore?idea=...), so request access logs would record every
+# typed idea. Silence uvicorn's access log unless ACCESS_LOG=1 (render.yaml also passes --no-access-log).
+if os.getenv("ACCESS_LOG", "0") != "1":
+    import logging
+    logging.getLogger("uvicorn.access").disabled = True
+
 ROOT = Path(__file__).parent
 CACHE = ROOT / "cache"
 CACHE.mkdir(exist_ok=True)

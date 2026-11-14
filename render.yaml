@@ -7,7 +7,7 @@ services:
     runtime: python
     plan: free            # sleeps after 15 min idle: open the URL a minute before the demo
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT --no-access-log   # ideas travel in the URL: keep them out of logs
     healthCheckPath: /api/demos
     envVars:
       - key: YDC_API_KEY
