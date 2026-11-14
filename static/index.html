@@ -299,8 +299,7 @@
   #tour{position:absolute;left:50%;bottom:50px;z-index:5;transform:translate(-50%,8px);display:flex;align-items:center;gap:6px;overflow:hidden;
     background:rgba(14,14,14,.92);border:1px solid var(--line2);border-radius:999px;padding:5px 6px 5px 6px;font-size:13px;color:var(--dim);
     backdrop-filter:blur(12px);box-shadow:0 10px 40px #000a;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s}
-  body.touring[data-view=elsewhere] #tour{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
-  body.touring #seeall{display:none}
+  #tour{display:none!important}   /* the tour runs on its own; no control pill */
   #tour span{padding:0 6px;white-space:nowrap} #tour b{font-weight:600}
   #tour button{border:0;background:#1b1b1b;color:var(--text);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;line-height:1}
   #tour button:hover{background:#2a2a2a}
