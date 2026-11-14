@@ -21,7 +21,7 @@ import prompts
 import status
 import you
 from prompts import AXES
-from verify import check_receipt
+from verify import check_receipt, name_on_page, verify_quote
 
 MAX_PAGES = int(os.getenv("MAX_PAGES", "18"))
 LLM_CONCURRENCY = int(os.getenv("LLM_CONCURRENCY", "6"))
@@ -61,10 +61,54 @@ def _key(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", (name or "").lower())
 
 
+_MD_LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+_SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'(])")
+_WORD = re.compile(r"[a-z0-9]+")
+_STOP = {"the", "a", "an", "and", "or", "of", "to", "in", "for", "on", "with", "by", "at", "is", "are",
+         "it", "its", "that", "this", "as", "from", "their", "they", "be", "has", "have", "was", "who"}
+
+
+def _page_sentences(markdown: str) -> list[str]:
+    """Plain sentences from page markdown (link syntax removed), skipping tables and nav crumbs."""
+    text = _MD_LINK.sub(r"", markdown or "")
+    out = []
+    for line in text.splitlines():
+        line = line.strip().lstrip("#>*-+ ").strip()
+        if not line or line.count("|") >= 2:
+            continue
+        for s in _SENT_SPLIT.split(line):
+            s = re.sub(r"\s+", " ", re.sub(r"[*`]", "", s)).strip()  # **bold** → bold (verify ignores these)
+            if 8 <= len(s.split()) <= 60:
+                out.append(s)
+    return out
+
+
+def repair_quote(c: dict, markdown: str) -> str | None:
+    """If the model's quote isn't on the page, pick the page's own sentence that names the company
+    and best matches what the model said about it. Returns None when no sentence names it."""
+    name = c.get("name") or ""
+    claim = set(_WORD.findall(f"{c.get('evidence_quote', '')} {c.get('one_liner', '')}".lower())) - _STOP
+    best, best_score = None, 0
+    for s in _page_sentences(markdown):
+        if not name_on_page(name, s):
+            continue
+        score = len(claim & set(_WORD.findall(s.lower()))) + 0.5  # naming the company is the floor
+        if score > best_score:
+            best, best_score = s, score
+    return best
+
+
 def _build_universe(page: dict, c: dict, core: dict) -> dict:
     theirs = {a: str((c.get("execution") or {}).get(a, "unknown")) for a in AXES}
     div = [a for a in (c.get("divergent_axes") or []) if a in AXES]
-    receipt = check_receipt(c.get("evidence_quote", ""), page.get("markdown") or "", c["name"], page.get("url"))
+    md = page.get("markdown") or ""
+    quote_repaired = False
+    if verify_quote(c.get("evidence_quote", ""), md) == "unverified":
+        fixed = repair_quote(c, md)
+        if fixed:
+            c = {**c, "evidence_quote": fixed}
+            quote_repaired = True
+    receipt = check_receipt(c.get("evidence_quote", ""), md, c["name"], page.get("url"))
     return {
         "id": hashlib.md5(_key(c["name"]).encode()).hexdigest()[:10],
         "name": c["name"],
@@ -74,6 +118,8 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
         "source_title": page.get("title", ""),
         "evidence_quote": c.get("evidence_quote", ""),
         "verification": receipt["verification"],
+        # True when the model's quote wasn't on the page and we used the page's own sentence instead.
+        "quote_repaired": quote_repaired,
         "name_on_page": receipt["name_on_page"],
         "receipt_url": receipt["receipt_url"],
         "execution": theirs,
@@ -143,7 +189,8 @@ async def explore(idea: str):
         async def work(page):
             async with sem:
                 try:
-                    out = await llm.complete_json(client, prompts.EXTRACT, prompts.extract_user(core, page))
+                    out = await llm.complete_json(client, prompts.EXTRACT, prompts.extract_user(core, page),
+                                                  domains=[_domain(page.get("url"))])
                 except Exception:  # noqa: BLE001
                     out = {"companies": []}
             for c in (out.get("companies") or [])[:3]:

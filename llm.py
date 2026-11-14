@@ -15,8 +15,12 @@ RESEARCH_URL = "https://api.you.com/v1/research"
 _CITATION = re.compile(r"\s*\[\[\s*\d+(?:\s*,\s*\d+)*\s*\]\]|\s*\[\d+(?:\s*,\s*\d+)*\]")
 
 
-async def _you_research_text(client: httpx.AsyncClient, system: str, user: str) -> str:
-    """Runs one prompt through the You.com Research API and returns its text answer."""
+async def _you_research_text(client: httpx.AsyncClient, system: str, user: str,
+                             domains: list[str] | None = None) -> str:
+    """Runs one prompt through the You.com Research API and returns its text answer.
+
+    Research searches the web on its own; `domains` keeps it on the sites we already read,
+    so the facts (and quotes) it uses come from the same pages as our receipts."""
     key = os.getenv("YDC_API_KEY")
     if not key:
         raise RuntimeError("YDC_API_KEY is not set (see .env.example)")
@@ -27,10 +31,14 @@ async def _you_research_text(client: httpx.AsyncClient, system: str, user: str) 
         "no citation markers like [1] or [[1, 2]].\n\n"
         f"{user}"
     )
+    body = {"input": prompt, "research_effort": os.getenv("YOU_LLM_EFFORT", "lite")}
+    domains = [d for d in (domains or []) if d]
+    if domains:
+        body["source_control"] = {"include_domains": domains[:20]}
     r = await client.post(
         RESEARCH_URL,
         headers={"X-API-Key": key, "Content-Type": "application/json"},
-        json={"input": prompt, "research_effort": os.getenv("YOU_LLM_EFFORT", "lite")},
+        json=body,
         timeout=90,
     )
     if r.status_code >= 400:
@@ -53,7 +61,9 @@ def _parse_json(text: str):
         return json.loads(text[start:end + 1])
 
 
-async def complete_json(client: httpx.AsyncClient, system: str, user: str, max_tokens: int = 2000):
+async def complete_json(client: httpx.AsyncClient, system: str, user: str, max_tokens: int = 2000,
+                        domains: list[str] | None = None):
+    """`domains` only matters for LLM_PROVIDER=you (see _you_research_text); others ignore it."""
     provider = os.getenv("LLM_PROVIDER", "openai").lower()
     if provider == "anthropic":
         r = await client.post(
@@ -75,7 +85,7 @@ async def complete_json(client: httpx.AsyncClient, system: str, user: str, max_t
             raise RuntimeError(f"Anthropic {r.status_code}: {r.text[:300]}")
         text = "".join(b.get("text", "") for b in r.json()["content"])
     elif provider == "you":
-        text = await _you_research_text(client, system, user)
+        text = await _you_research_text(client, system, user, domains)
     else:
         base = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
         r = await client.post(
