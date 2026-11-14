@@ -29,8 +29,9 @@ const CORE = {
 
 const U = (o) => ({
   kind: "parallel", website: "", transfer: "", industry: "Small retail", lens: "parallel", lens_label: "Same idea, other execution",
-  source_title: "Example source page", verification: "verified", relationship: "collaborator", ...o,
-  divergence: o.divergent_axes.length,
+  source_title: "Example source page", verification: "verified", relationship: "collaborator",
+  stage: "unknown", funding: "", ticker: "", stage_url: "", unknown_axes: [], ...o,
+  divergence: o.divergent_axes.length,   // unknown_axes are NOT counted here
 });
 
 const UNIVERSES = [
@@ -40,7 +41,8 @@ const UNIVERSES = [
       relationship: "collaborator", relationship_reason: "Different city, so no customer overlap; they could license the playbook.",
       lesson: "They hit 400 shops by training one local rep per neighbourhood instead of a big sales team.",
       evidence_quote: "Text us your sales at closing time and we'll text back how much cash you really have.",
-      source_url: "https://example.com/ledgerly", source_title: "Ledgerly — cash by text" }),
+      source_url: "https://example.com/ledgerly", source_title: "Ledgerly — cash by text",
+      stage: "seed", funding: "$2.1M seed", stage_url: "https://example.com/ledgerly-seed" }),
   U({ id: "m02", name: "TillTalk", one_liner: "Voice-note bookkeeping for NYC delis, read back every morning.",
       execution: { customer: "NYC deli owners", geography: "New York City", business_model: "monthly subscription", technology: "voice notes", channel: "door-to-door sales" },
       divergent_axes: ["technology"], divergence_summary: "Same idea and same customers, but voice notes instead of SMS.",
@@ -54,14 +56,14 @@ const UNIVERSES = [
       relationship: "collaborator", relationship_reason: "Different continent; their supplier-funded model could be borrowed.",
       lesson: "Getting suppliers to pay removed the shop owner's price objection entirely.",
       evidence_quote: "DukaBook is free for every duka because distributors pay to see demand.",
-      source_url: "https://example.com/dukabook" }),
+      source_url: "https://example.com/dukabook", stage: "series_a", funding: "$12M Series A" }),
   U({ id: "m04", name: "CornerCash", one_liner: "Cash forecasting add-on for corner-shop POS systems in London.",
       execution: { customer: "corner shops", geography: "London", business_model: "per-terminal fee", technology: "POS integration", channel: "POS resellers" },
-      divergent_axes: ["geography", "business_model", "technology", "channel"], divergence_summary: "Same idea, but plugged into the till instead of asking owners to report.",
+      divergent_axes: ["geography", "technology", "channel"], unknown_axes: ["business_model"], divergence_summary: "Same idea, but plugged into the till instead of asking owners to report.",
       relationship: "collaborator", relationship_reason: "UK market only.", verification: "partial",
       lesson: "Zero data entry wins, but only shops with a modern POS could use it.",
       evidence_quote: "CornerCash reads your till and warns you a week before cash runs short.",
-      source_url: "https://example.com/cornercash" }),
+      source_url: "https://example.com/cornercash", stage: "bootstrapped" }),
   U({ id: "m05", name: "Kirana Khata", one_liner: "WhatsApp bot that keeps a credit-and-cash book for Indian grocery stores.",
       execution: { customer: "kirana stores", geography: "India", business_model: "freemium", technology: "WhatsApp bot", channel: "word of mouth" },
       divergent_axes: ["geography", "business_model", "channel", "technology"], divergence_summary: "Same idea, but on WhatsApp in India and spread by word of mouth.",
@@ -82,14 +84,15 @@ const UNIVERSES = [
       relationship: "collaborator", relationship_reason: "Different customer segment.",
       lesson: "Self-serve signup worked, but churn was 12% a month without a human touch.",
       evidence_quote: "Snap your receipts and Shoebox tells you if you can afford tomorrow's stock.",
-      source_url: "https://example.com/shoebox", lens: "graveyard", lens_label: "Startup graveyard" }),
+      source_url: "https://example.com/shoebox", lens: "graveyard", lens_label: "Startup graveyard",
+      stage: "shut_down", funding: "$800K pre-seed" }),
   U({ id: "m08", name: "Tally Street", one_liner: "Paper-ledger-to-app service for Lagos market traders.",
       execution: { customer: "market traders", geography: "Nigeria", business_model: "transaction fee", technology: "USSD", channel: "market associations" },
-      divergent_axes: ["customer", "geography", "business_model", "technology", "channel"], divergence_summary: "Same core idea, but every execution choice is different.",
+      divergent_axes: ["customer", "geography", "technology"], unknown_axes: ["business_model", "channel"], divergence_summary: "Same core idea, but different customers, country and technology.",
       relationship: "collaborator", relationship_reason: "Completely different market.", verification: "unverified",
       lesson: "Working through market associations built trust faster than ads.",
       evidence_quote: "Tally Street turns every trader's notebook into a live balance.",
-      source_url: "https://example.com/tally-street" }),
+      source_url: "https://example.com/tally-street", lens: "graveyard", lens_label: "Startup graveyard" }),
   // Other industries, same core mechanism
   U({ id: "m09", name: "HarvestFlow", kind: "inspiration", industry: "Farming", one_liner: "Seasonal income forecasting by SMS for smallholder farmers.",
       transfer: "Their 'lean week' SMS warning, sent 10 days before cash runs out.",
@@ -106,7 +109,8 @@ const UNIVERSES = [
       relationship_reason: "Different industry.",
       lesson: "One number ('safe to spend') was the feature everyone remembered.",
       evidence_quote: "Steady Gig shows one number every morning: what is safe to spend today.",
-      source_url: "https://example.com/steadygig", lens: "cross", lens_label: "Other industry: gig work" }),
+      source_url: "https://example.com/steadygig", lens: "cross", lens_label: "Other industry: gig work",
+      stage: "public", ticker: "NASDAQ:STDY", stage_url: "https://example.com/steadygig-ipo" }),
   U({ id: "m11", name: "ClinicRunway", kind: "inspiration", industry: "Healthcare", one_liner: "Cash runway alerts for independent dental clinics.",
       transfer: "Weekly owner digest that turns insurance delays into a cash forecast.",
       execution: { customer: "dental clinic owners", geography: "United States", business_model: "SaaS", technology: "accounting integration", channel: "dental associations" },
@@ -122,23 +126,33 @@ const UNIVERSES = [
       relationship_reason: "Different industry; brewery channel mirrors your distributor angle.",
       lesson: "Brewery reps bundled it into supply contracts: instant distribution.",
       evidence_quote: "At last orders, PourCount texts the landlord exactly what the night took.",
-      source_url: "https://example.com/pourcount", lens: "cross", lens_label: "Other industry: hospitality" }),
+      source_url: "https://example.com/pourcount", lens: "cross", lens_label: "Other industry: hospitality",
+      stage: "pre_seed", funding: "€400K pre-seed" }),
 ];
 
+// event_date = when it happened (YYYY-MM), source_date = when the source was published (YYYY-MM-DD).
+// Status events may override stage/funding/ticker/stage_url from the universe event.
 const STATUSES = {
-  m01: { status: "thriving", signal: "Raised a seed round and expanded to Milwaukee.", signal_date: "2026-09" },
-  m02: { status: "active", signal: "Launched Spanish-language voice notes.", signal_date: "2026-06" },
-  m03: { status: "thriving", signal: "Signed a nationwide deal with a major distributor.", signal_date: "2026-08" },
-  m04: { status: "pivoted", signal: "Pivoted to selling forecasts to POS vendors.", signal_date: "2026-03" },
-  m05: { status: "active", signal: "Passed 1M monthly messages.", signal_date: "2026-05" },
-  m06: { status: "quiet", signal: "", signal_date: null },
-  m07: { status: "shut_down", signal: "Shut down; founders cited churn without in-person support.", signal_date: "2025-11",
+  m01: { status: "thriving", signal: "Raised a seed round and expanded to Milwaukee.", event_date: "2026-04", source_date: "2026-09-02" },
+  m02: { status: "active", signal: "Launched Spanish-language voice notes.", event_date: "2026-06", source_date: "2026-06-18",
+         stage: "seed", funding: "$1.5M seed" },
+  m03: { status: "thriving", signal: "Signed a nationwide deal with a major distributor.", event_date: "", source_date: "2026-08-11" },
+  m04: { status: "pivoted", signal: "Pivoted to selling forecasts to POS vendors.", event_date: "2026-03", source_date: "" },
+  m05: { status: "active", signal: "Passed 1M monthly messages.", event_date: "2026-05", source_date: "2026-05-20" },
+  m06: { status: "quiet", signal: "", event_date: "", source_date: "" },
+  m07: { status: "shut_down", signal: "Shut down; founders cited churn without in-person support.", event_date: "2025-04", source_date: "2025-11-03",
          conflict: "One directory still lists it as active." },
-  m08: { status: "unknown", signal: "", signal_date: null },
-  m09: { status: "thriving", signal: "Expanded to three new countries.", signal_date: "2026-10" },
-  m10: { status: "active", signal: "Launched a debit card.", signal_date: "2026-04" },
-  m11: { status: "shut_down", signal: "Acquired and wound down.", signal_date: "2026-01" },
-  m12: { status: "active", signal: "Added Guinness distributor partnership.", signal_date: "2026-07" },
+  m08: { status: "unknown", signal: "", event_date: "", source_date: "" },
+  m09: { status: "thriving", signal: "Expanded to three new countries.", event_date: "2026-10", source_date: "2026-10-15" },
+  m10: { status: "active", signal: "Launched a debit card.", event_date: "2026-04", source_date: "2026-04-09" },
+  m11: { status: "shut_down", signal: "Acquired and wound down.", event_date: "2025-12", source_date: "2026-01-14", stage: "acquired",
+         stage_url: "https://example.com/clinicrunway-acquired" },
+  m12: { status: "active", signal: "Added Guinness distributor partnership.", event_date: "2026-07", source_date: "2026-07-30" },
+};
+
+const ANALYSIS = {
+  type: "analysis", market: "emerging", funded: 4, dead: 2,
+  summary: "A handful of funded teams are proving demand for daily cash tracking, but nobody owns NYC delis yet. The ones that died relied on self-serve signup, so plan for an in-person or distributor channel from day one.",
 };
 
 function stream(events, onEvent, speed = 1) {
@@ -165,8 +179,10 @@ function script(idea) {
   ev.push([400, { type: "stage", msg: "Checking which universes are still alive today…" }]);
   UNIVERSES.forEach((u) => {
     const s = STATUSES[u.id];
-    ev.push([220, { type: "status", id: u.id, conflict: "", signal_url: s.signal ? `https://example.com/news/${u.id}` : null, ...s }]);
+    ev.push([220, { type: "status", id: u.id, conflict: "", signal_url: s.signal ? `https://example.com/news/${u.id}` : null, signal_date: s.source_date, ...s }]);
   });
+  ev.push([300, { type: "stage", msg: "Sizing up the market…" }]);
+  ev.push([500, ANALYSIS]);
   ev.push([200, { type: "done", count: UNIVERSES.length }]);
   return ev;
 }

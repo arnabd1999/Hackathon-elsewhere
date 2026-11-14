@@ -268,6 +268,23 @@
   .fadein{animation:fadein .35s ease}
   @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .empty{color:var(--dim);font-size:13px;padding:10px 4px}
+  a.tag{text-decoration:none} a.tag:hover{border-color:var(--line2);color:var(--text)}
+  .tag .src{color:var(--faint);margin-left:6px;text-decoration:underline}
+  .dna i.unk{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2);opacity:.6}
+  .cmp tr.unk td:nth-child(3){color:var(--faint)}
+  .cmp tr.unk td:nth-child(3)::after{content:"  unknown";color:var(--faint);font-size:11px}
+  .means .mkt{display:inline-block;font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;font-weight:700;border:1px solid currentColor;border-radius:999px;padding:2px 9px}
+  .means .cnts{display:flex;gap:14px;margin:10px 0 8px;font-size:12.5px;color:var(--dim)}
+  .means .cnts b{color:var(--text);font-family:"JetBrains Mono",monospace;font-weight:500}
+  .means p{margin:0;font-size:13.5px;line-height:1.5;color:#d9d9d9}
+  .showcase{display:flex;gap:10px;justify-content:center;margin-top:22px;max-width:980px;width:100%}
+  .showcase button{flex:1 1 0;min-width:0;max-width:240px;text-align:left;background:rgba(18,18,18,.7);border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;color:var(--dim);font-size:12px;transition:border-color .2s}
+  .showcase button:hover{border-color:var(--line2);color:var(--text)}
+  .showcase .nm{display:block;color:var(--text);font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .showcase .ind{display:block;color:var(--sun);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin:2px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .showcase .ol{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4}
+  .showcase .from{display:block;margin-top:6px;color:var(--faint);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media (max-width:760px){ .showcase{flex-direction:column;align-items:center} .showcase button{max-width:100%;width:100%} }
 
   #board,#headline{transition:transform .6s cubic-bezier(.2,.8,.2,1),opacity .5s}
 
@@ -407,6 +424,7 @@
 <main>
   <aside id="left">
     <button class="xbtn" data-close="left" aria-label="Close">×</button>
+    <div id="meansWrap" hidden><h3>What this means for you</h3><div class="card means" id="means"></div></div>
     <h3>Your idea, stripped to its core</h3>
     <div class="card core sun" id="core">…</div>
     <h3>The same concept, any industry</h3>
@@ -493,7 +511,17 @@ function el(tag, attrs = {}, parent){ const e = document.createElementNS(NS, tag
 const polar = (r, deg) => [C + r * Math.cos(deg * Math.PI/180), C + r * Math.sin(deg * Math.PI/180)];
 const wedgeCenter = i => -90 + i * 72;          // slice i is centred on this angle
 const ringR = d => d <= 0 ? BULL - 18 : BULL + (d - 0.5) * RING;
-const similarity = u => u.similarity ?? (u.kind === "inspiration" ? null : Math.max(5, Math.round(100 - u.divergence * 17)));
+// unknown_axes: axes where either side is unknown. Then we can't honestly give a percentage: similarity is null and the UI shows "?"
+const unsure = u => u.kind !== "inspiration" && (u.unknown_axes || []).length > 0;
+const similarity = u => unsure(u) ? null : u.similarity ?? (u.kind === "inspiration" ? null : Math.max(5, Math.round(100 - (u.divergence || 0) * 17)));
+const SIM_DEFAULT = 50;   // neutral value for sizing/placement when similarity is unknown
+const STAGES = {bootstrapped:"Bootstrapped", pre_seed:"Pre-seed", seed:"Seed", series_a:"Series A", series_b_plus:"Series B+",
+  unicorn:"Unicorn", public:"Public", acquired:"Acquired", shut_down:"Shut down"};
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+// "2025-04", "2025-04-12" or "2026-09-10T14:57:56" -> "Apr 2025"; anything else -> ""
+const monthYear = s => { const m = /^(\d{4})-(\d{2})/.exec(String(s || "")); return m && +m[2] >= 1 && +m[2] <= 12 ? `${MONTHS[+m[2] - 1]} ${m[1]}` : ""; };
+const datesLine = u => [monthYear(u.event_date) && `Event: ${monthYear(u.event_date)}`,
+  monthYear(u.source_date || u.signal_date) && `source dated ${monthYear(u.source_date || u.signal_date)}`].filter(Boolean).join(" · ");
 // each other industry gets its own colour; same-industry companies stay blue (partner) or coral (competitor)
 const IND_COLORS = ["#ffcf4a", "#5fe3b3", "#b48cff", "#ff8fd0", "#c6f26b", "#ffa24a", "#7ee0ff"];
 const indKey = u => (u.industry || "Other").trim();
@@ -502,7 +530,7 @@ const colorOf = u => u.kind === "inspiration" ? indColor(indKey(u)) : u.relation
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(",");
 // size = relevance: closer match (or, across industries, better evidence and momentum) = bigger planet
 const insScore = u => (u.verification === "verified" ? 2 : 0) + ({thriving:2, active:1}[u.status] || 0);
-const rOf = u => u.kind === "inspiration" ? 10 + insScore(u) * 2.2 : 8 + (similarity(u) ?? 50) / 100 * 12;
+const rOf = u => u.kind === "inspiration" ? 10 + insScore(u) * 2.2 : 8 + (similarity(u) ?? SIM_DEFAULT) / 100 * 12;
 const primaryAxis = u => AXES.find(a => (u.divergent_axes || []).includes(a)) || "customer";
 
 /* ---------- static board ---------- */
@@ -546,7 +574,7 @@ function place(u){
     return polar(BAND_R, S.indAngle[key] + [0, -11, 11, -22, 22][(m - 1) % 5]);
   }
   const n = S.slot.n = (S.slot.n ?? 0) + 1;
-  const sim = similarity(u) ?? 50;
+  const sim = similarity(u) ?? SIM_DEFAULT;
   const r = BULL + 40 + (100 - sim) / 100 * (BAND_R - BULL - 110);   // more similar = closer to you
   return polar(r, 20 + n * 137.5);
 }
@@ -663,6 +691,7 @@ function reset(){
   document.body.classList.remove("show-left", "show-right", "focus"); document.body.dataset.view = "elsewhere"; stopGlobe();
   cancelAnimationFrame(vbRaf); setVB(VB0.slice());
   $("darts").innerHTML = ""; $("trails").innerHTML = ""; $("clusters").innerHTML = ""; $("links").innerHTML = ""; $("grave").innerHTML = "";
+  $("meansWrap").hidden = true; $("means").innerHTML = "";
   $("core").textContent = "…"; $("mech").textContent = "…"; $("choices").innerHTML = ""; $("queries").innerHTML = ""; $("qsum").textContent = "0 live searches";
   drawBoard(null); renderHeadline(); renderRight();
 }
@@ -699,7 +728,7 @@ function onUniverse(ev){
   // fly in from outside the board along the same angle
   const ang = Math.atan2(y - C, x - C); const sx = C + Math.cos(ang) * 900, sy = C + Math.sin(ang) * 900;
   g.style.transform = `translate(${sx}px,${sy}px)`; g.style.opacity = 0;
-  const sim0 = similarity(u) ?? 70;
+  const sim0 = similarity(u) ?? SIM_DEFAULT;
   el("circle", {r: rOf(u) * 1.9, class:"dglow", fill:colorOf(u), opacity:(.1 + (sim0 / 100) * .14).toFixed(2), style:"filter:blur(9px)"}, g);
   if (u.kind === "inspiration") g.classList.add("insp"); else if (u.relationship === "competitor") g.classList.add("comp");
   const R0 = rOf(u);
@@ -718,7 +747,11 @@ function onUniverse(ev){
 }
 function onStatus(s){
   const u = S.u[s.id]; if (!u) return;
-  Object.assign(u, {status:s.status, signal:s.signal, signal_url:s.signal_url, signal_date:s.signal_date, conflict:s.conflict});
+  Object.assign(u, {status:s.status, signal:s.signal, signal_url:s.signal_url, signal_date:s.source_date || s.signal_date,
+    event_date:s.event_date || "", source_date:s.source_date || "", conflict:s.conflict});
+  // a status check may know more about funding than the original page did; only override with real values
+  if (s.stage && s.stage !== "unknown") u.stage = s.stage;
+  for (const k of ["funding", "ticker", "stage_url"]) if (s[k]) u[k] = s[k];
   u.g.classList.add(`st-${s.status}`); u.body.setAttribute("fill", colorOf(u));
   renderHeadline(); renderGrave(); if (S.selected === s.id) renderDetail(u); else if (!S.selected) renderRight();
 }
@@ -748,7 +781,8 @@ function renderHeadline(){
 }
 // only open real web links (never javascript: or data: URLs from upstream data)
 const safeUrl = s => { try { const x = new URL(s); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
-const isDead = u => u.status === "shut_down" || u.lens === "graveyard";
+// dead = confirmed shut down. Being found via a graveyard search is NOT proof of death.
+const isDead = u => u.status === "shut_down" || u.stage === "shut_down";
 function setView(v){
   if (S.view === v) return;
   S.touched = true; pauseTour();
@@ -774,7 +808,7 @@ function hover(id, on){
   requestAnimationFrame(() => line.classList.add("on"));
   const sim = similarity(u);
   tip.innerHTML = `<div class="t">${esc(u.name)}</div><div class="s">${esc(u.one_liner)}</div>
-    <div style="color:${colorOf(u)};font-weight:600;margin-bottom:6px">${u.kind === "inspiration" ? esc(u.industry) : u.relationship === "competitor" ? "Competitor" : "Partner"}${sim != null ? ` · <span class="mono">${sim}% like you</span>` : ""}</div>
+    <div style="color:${colorOf(u)};font-weight:600;margin-bottom:6px">${u.kind === "inspiration" ? esc(u.industry) : u.relationship === "competitor" ? "Competitor" : "Partner"}${sim != null ? ` · <span class="mono">${sim}% like you</span>` : unsure(u) ? ` · <span class="mono">? like you</span>` : ""}</div>
     <div>${esc(u.divergence_summary)}</div><div style="color:var(--faint);margin-top:8px;font-size:11px">Click to open</div>`;
   const bb = u.body.getBoundingClientRect(), p = {x: bb.left + bb.width / 2, y: bb.top + bb.height / 2}, box = $("stage").getBoundingClientRect();
   let left = p.x - box.left + 18, top = p.y - box.top - 20;
@@ -792,7 +826,7 @@ function thread(u, cls){
   const p = el("path", {d:curve(u), class:cls}, $("trails"));
   p.style.setProperty("--len", Math.ceil(len * 1.2)); return p;
 }
-const dna = u => `<span class="dna" title="Gold = same choice as you">${AXES.map(a => `<i class="${(u.divergent_axes || []).includes(a) ? "diff" : ""}"></i>`).join("")}</span>`;
+const dna = u => `<span class="dna" title="Gold = same choice as you">${AXES.map(a => `<i class="${(u.unknown_axes || []).includes(a) ? "unk" : (u.divergent_axes || []).includes(a) ? "diff" : ""}"></i>`).join("")}</span>`;
 
 /* ---------- right panel ---------- */
 function renderRight(){
@@ -800,14 +834,16 @@ function renderRight(){
   const fn = FILTERS.find(f => f[0] === S.filter)[2];
   const list = Object.values(S.u);
   if (!list.length){ $("detail").innerHTML = `<h3>Closest to you</h3><div class="empty">Companies appear here as the agent finds them, ranked by how similar they are to your idea.</div>`; return; }
-  const par = list.filter(u => u.kind !== "inspiration").sort((a, b) => similarity(b) - similarity(a));
+  const par = list.filter(u => u.kind !== "inspiration").sort((a, b) => (similarity(b) ?? SIM_DEFAULT) - (similarity(a) ?? SIM_DEFAULT));
   const ins = list.filter(u => u.kind === "inspiration");
   const col = par.filter(u => u.relationship === "collaborator"), rest = par.filter(u => u.relationship !== "collaborator");
   const row = u => {
     const sim = similarity(u); const st = STATUS[u.status];
     return `<div class="rank ${fn(u) ? "" : "dim"}" data-id="${u.id}">
       <div class="nm"><i class="dot" style="background:${colorOf(u)}"></i><span>${esc(u.name)}</span></div>
-      ${sim != null ? `<div class="pct" style="color:${sim >= 70 ? "var(--sun)" : "var(--text)"}">${sim}%</div>` : `<div class="pct" style="color:var(--insp);font-size:11px">${esc(u.industry)}</div>`}
+      ${sim != null ? `<div class="pct" style="color:${sim >= 70 ? "var(--sun)" : "var(--text)"}">${sim}%</div>`
+        : unsure(u) ? `<div class="pct" style="color:var(--dim)" title="Some of their choices are unknown">?</div>`
+        : `<div class="pct" style="color:var(--insp);font-size:11px">${esc(u.industry)}</div>`}
       ${sim != null ? `<div class="bar"><i style="width:${sim}%"></i></div>` : ""}
       <div class="sub">${st ?`<span style="color:${st[1]}">${st[0]}</span> · ` : ""}${esc(u.divergence_summary)}</div></div>`;
   };
@@ -819,12 +855,12 @@ function renderRight(){
     r.onmouseenter = () => hover(r.dataset.id, true); r.onmouseleave = () => hover(r.dataset.id, false);
   });
 }
-function gauge(pct, color){
+function gauge(pct, color, label){
   const r = 30, c = 2 * Math.PI * r, off = c * (1 - pct / 100);
   return `<svg class="gauge" width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#232323" stroke-width="6"/>
     <circle cx="38" cy="38" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" transform="rotate(-90 38 38)">
     <animate attributeName="stroke-dashoffset" from="${c}" to="${off}" dur=".9s" fill="freeze" calcMode="spline" keySplines=".2 .8 .2 1" keyTimes="0;1"/></circle>
-    <text x="38" y="42" text-anchor="middle" fill="#eeeeee" font-size="15" font-weight="600">${pct}%</text></svg>`;
+    <text x="38" y="42" text-anchor="middle" fill="#eeeeee" font-size="15" font-weight="600">${label ?? pct + "%"}</text></svg>`;
 }
 function select(id){
   const u = S.u[id]; if (!u) return;
@@ -857,34 +893,45 @@ function renderDetail(u){
   const rel = u.kind === "inspiration" ? `Other industry · ${u.industry}` : u.relationship === "competitor" ? "Direct competitor" : "Possible partner";
   const take = u.kind === "inspiration" && u.transfer ? [`Why ${(u.industry || "this industry").toLowerCase()}?`, u.transfer]
     : u.relationship === "collaborator" && u.relationship_reason ? ["How you could team up", u.relationship_reason] : ["The lesson for you", u.lesson];
-  const nDiff = (u.divergent_axes || []).length;
+  const nDiff = (u.divergent_axes || []).length, nUnk = (u.unknown_axes || []).length;
+  const stLabel = STAGES[u.stage];
+  const showStage = stLabel && !(u.stage === "shut_down" && u.status === "shut_down");
+  const tk = String(u.ticker || "").trim(), tkUrl = tk ? `https://www.google.com/finance/quote/${encodeURIComponent(tk.includes(":") ? tk.split(":").reverse().join(":") : tk).replace("%3A", ":")}` : "";
+  const stageTxt = [stLabel, u.funding, tk && tk.split(":").pop()].filter(Boolean).map(esc).join(" · ");
+  const stUrl = safeUrl(u.stage_url);
+  const stageSrc = stUrl ? `<a class="src" href="${esc(stUrl)}" target="_blank" rel="noopener" title="Funding source">source</a>` : "";
+  const stageChip = !showStage ? "" : tkUrl
+    ? `<a class="tag" href="${esc(tkUrl)}" target="_blank" rel="noopener" title="Stock quote on Google Finance">${stageTxt} ↗</a>${stUrl ? `<a class="tag" href="${esc(stUrl)}" target="_blank" rel="noopener" title="Funding source">source</a>` : ""}`
+    : `<span class="tag">${stageTxt}${stageSrc}</span>`;
+  const when = datesLine(u), sigUrl = safeUrl(u.signal_url);
   const receipt = safeUrl(u.receipt_url || u.source_url), site = safeUrl(u.website);
   const webLink = site ? `<a class="lk primary" href="${esc(site)}" target="_blank" rel="noopener">Visit website ↗</a>`
     : `<a class="lk primary" href="https://www.google.com/search?q=${encodeURIComponent(u.name + " " + (u.industry || ""))}" target="_blank" rel="noopener">Search the web ↗</a>`;
   $("detail").innerHTML = `<div class="fadein">
     <button class="back" id="back">← Ranked list</button>
     <div class="card">
-      <div class="dhead">${sim != null ? gauge(sim, "var(--sun)") : gauge(100, "var(--insp)").replace(">100%<", ">≈<")}
+      <div class="dhead">${sim != null ? gauge(sim, "var(--sun)") : unsure(u) ? gauge(0, "var(--dim)", "?") : gauge(100, "var(--insp)", "≈")}
         <div><div class="name">${esc(u.name)}</div><div class="sub">${esc(u.one_liner)}</div></div></div>
       <div class="tags">
         <span class="tag" style="color:${colorOf(u)};border-color:${colorOf(u)}">${esc(rel)}</span>
         <span class="tag">${st ? `<span style="color:${st[1]}">● ${st[0]}</span>` : "Checking if alive…"}</span>
+        ${stageChip}
       </div>
       <div class="lks">${webLink}${receipt ? `<a class="lk" href="${esc(receipt)}" target="_blank" rel="noopener" title="${esc(u.source_title || "")}">Source ↗</a>` : ""}</div>
     </div>
     <div class="card" style="${u.kind === "inspiration" ? "border-color:#333333" : ""}"><div class="takeaway"><small>${take[0]}</small>${esc(take[1])}</div></div>
 
-    <details class="sec"><summary>Where they split from you<span class="hint">${u.kind === "inspiration" ? "different industry" : `${nDiff} of 5 choices differ`}</span></summary><div>
+    <details class="sec"><summary>Where they split from you<span class="hint">${u.kind === "inspiration" ? "different industry" : nUnk ? `${nDiff} differ · ${nUnk} unknown` : `${nDiff} of 5 choices differ`}</span></summary><div>
       <div style="margin-bottom:10px">${esc(u.divergence_summary)}</div>
       <table class="cmp"><tr><td></td><td style="color:var(--dim)">You</td><td style="color:var(--dim)">Them</td></tr>
-      ${AXES.map(a => { const d = (u.divergent_axes || []).includes(a);
-        return `<tr class="${d ? "diff" : "same"}"><td>${AXIS_NAME[a]}</td><td>${esc(yours[a])}</td><td>${esc(u.execution?.[a])}</td></tr>`; }).join("")}
+      ${AXES.map(a => { const d = (u.divergent_axes || []).includes(a), k = (u.unknown_axes || []).includes(a);
+        return `<tr class="${k ? "unk" : d ? "diff" : "same"}"><td>${AXIS_NAME[a]}</td><td>${esc(yours[a])}</td><td>${esc(u.execution?.[a])}</td></tr>`; }).join("")}
       </table>
       ${u.relationship_reason ? `<div class="sub" style="margin-top:10px;font-size:12.5px">${esc(u.relationship_reason)}</div>` : ""}</div></details>
 
     <details class="sec"><summary>Alive today?<span class="hint">${st ? `<span style="color:${st[1]}">${st[0]}</span>` : "checking…"}</span></summary><div>
       ${u.status ? `<div>${esc(u.signal || "No clear signal in the past year.")}</div>
-        ${u.signal_url ? `<div style="font-size:12px;margin-top:6px;color:var(--dim)">${esc(u.signal_date || "")} · <a href="${esc(u.signal_url)}" target="_blank" rel="noopener">source</a></div>` : ""}
+        ${when || sigUrl ? `<div style="font-size:12px;margin-top:6px;color:var(--dim)">${esc(when)}${when && sigUrl ? " · " : ""}${sigUrl ? `<a href="${esc(sigUrl)}" target="_blank" rel="noopener">read it ↗</a>` : ""}</div>` : ""}
         ${u.conflict ? `<div class="conflict">⚠ Sources disagree: ${esc(u.conflict)}</div>` : ""}
         ${u.status === "shut_down" ? `<button class="btn" id="dive" style="margin-top:12px;width:100%">Why did this universe die? →</button><div id="diveout"></div>` : ""}`
         : `<div class="sub" style="display:flex;gap:8px;align-items:center"><div class="spinner"></div>Checking live news…</div>`}
@@ -1044,15 +1091,26 @@ function drawGlobe(t){
 /* ---------- graveyard ---------- */
 function renderGrave(){
   if (!S) return;
-  const dead = Object.values(S.u).filter(isDead).sort((a, b) => (similarity(b) ?? 0) - (similarity(a) ?? 0));
+  const dead = Object.values(S.u).filter(isDead).sort((a, b) => (similarity(b) ?? SIM_DEFAULT) - (similarity(a) ?? SIM_DEFAULT));
   if (!dead.length){ $("grave").innerHTML = `<div class="gempty"><b>No graveyard yet</b>${S.done ? "We didn't find anyone who tried this and failed. That's either open ground or an untested risk." : "Checking which of these are still alive…"}</div>`; return; }
   $("grave").innerHTML = `<div class="ggrid">${dead.map((u, i) => { const sim = similarity(u);
     return `<div class="gcard" data-id="${u.id}" style="animation-delay:${i * 70}ms">
-      <div class="top"><span>${u.status === "shut_down" ? "Shut down" : "From the graveyard"}</span><span class="rip">${esc(u.signal_date || "")}</span></div>
-      <h4>${esc(u.name)}</h4><div class="meta">${esc([u.industry, u.execution?.geography].filter(Boolean).join(" · "))}</div>
-      ${sim != null ? `<div class="sim">${sim}% like you</div>` : ""}
+      <div class="top"><span>${u.stage === "acquired" ? "Acquired, shut down" : "Shut down"}</span><span class="rip">${esc(monthYear(u.event_date) || monthYear(u.source_date || u.signal_date))}</span></div>
+      <h4>${esc(u.name)}</h4><div class="meta">${esc([u.industry, u.execution?.geography].filter(x => x && !/^unknown$/i.test(String(x).trim())).join(" · "))}</div>
+      ${sim != null ? `<div class="sim">${sim}% like you</div>` : unsure(u) ? `<div class="sim">? like you</div>` : ""}
       <div class="why"><small>What to learn</small>${esc(u.lesson || u.signal || u.one_liner)}</div></div>`; }).join("")}</div>`;
   document.querySelectorAll(".gcard").forEach(c => c.onclick = () => select(c.dataset.id));
+}
+
+/* ---------- what this means for you ---------- */
+const MARKET = {crowded:["Crowded market", "var(--comp)"], emerging:["Emerging market", "var(--sun)"], open:["Open ground", "var(--collab)"]};
+function onAnalysis(ev){
+  const m = MARKET[ev.market];
+  const n = (x, label) => x != null && x !== "" && Number.isFinite(+x) ? `<span><b>${+x}</b> ${label}</span>` : "";
+  $("means").innerHTML = `${m ? `<span class="mkt" style="color:${m[1]}">${m[0]}</span>` : ""}
+    <div class="cnts">${n(ev.funded, "funded")}${n(ev.dead, "shut down")}</div>
+    ${ev.summary ? `<p>${esc(ev.summary)}</p>` : ""}`;
+  $("meansWrap").hidden = !(m || ev.summary);
 }
 
 /* ---------- run ---------- */
@@ -1061,6 +1119,7 @@ function handle(ev){
   else if (ev.type === "core") onCore(ev);
   else if (ev.type === "universe") onUniverse(ev);
   else if (ev.type === "status") onStatus(ev);
+  else if (ev.type === "analysis") onAnalysis(ev);
   else if (ev.type === "done"){ S.done = true; renderGrave(); setTimeout(autoFocus, 700); setTicker(`Done · ${ev.count} universes found and checked`, true); loadDemos(); }
   else if (ev.type === "error"){ setTicker("Error: " + ev.msg, true); $("ticker").style.borderColor = "var(--comp)"; }
 }
@@ -1076,6 +1135,28 @@ $("heroForm").onsubmit = e => { e.preventDefault(); submit($("idea").value); };
 $("topForm").onsubmit = e => { e.preventDefault(); submit($("ideaTop").value); };
 $("examples").innerHTML = EXAMPLES.map(x => `<button type="button">${esc(x)}</button>`).join("");
 $("examples").querySelectorAll("button").forEach(b => b.onclick = () => { $("idea").value = b.textContent; submit(b.textContent); });
+// live: show real companies from recorded runs; clicking one replays that run for free. Mock or failure keeps the idea pills.
+async function loadShowcase(){
+  if (CONFIG.USE_MOCK) return;
+  try {
+    const r = await fetch("/api/showcase"); if (!r.ok) return;
+    const all = await r.json();
+    const items = (Array.isArray(all) ? all : []).filter(x => x && x.name).slice(0, 4);
+    if (!items.length) return;
+    const demos = await API.listDemos().catch(() => []);
+    const fileFor = idea => (demos.find(d => d.idea === idea) || {}).file || "";
+    const st = x => STATUS[x.status] && x.status !== "unknown" ? ` · ${STATUS[x.status][0]}` : "";
+    const box = $("examples"); box.className = "showcase";
+    box.innerHTML = items.map(x => `<button type="button" data-file="${esc(fileFor(x.idea))}" data-idea="${esc(x.idea || "")}" title="${esc(x.evidence_quote ? `“${x.evidence_quote}”` : x.one_liner || "")}">
+      <span class="nm">${esc(x.name)}</span><span class="ind">${esc((x.industry || "") + st(x))}</span>
+      <span class="ol">${esc(x.one_liner || "")}</span>${x.idea ? `<span class="from">Found for: ${esc(x.idea)}</span>` : ""}</button>`).join("");
+    box.querySelectorAll("button").forEach(b => b.onclick = () => {
+      if (b.dataset.file) start("replay", b.dataset.file, b.dataset.idea);
+      else { $("idea").value = b.dataset.idea; $("idea").focus(); }   // nothing recorded to replay: never start a paid run on one click
+    });
+  } catch {}
+}
+loadShowcase();
 $("demos").onchange = e => { const o = e.target.selectedOptions[0]; if (!o.value) return; start("replay", o.value, o.dataset.idea); e.target.value = ""; };
 document.addEventListener("keydown", e => { if (e.key === "Escape"){ closeDrawer("left"); closeDrawer("right"); } });
 $("seeall").onclick = () => { S.touched = true; zoomOut(); };
