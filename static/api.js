@@ -17,6 +17,7 @@
 //                     relationship:"competitor"|"collaborator", relationship_reason, lesson,
 //                     evidence_quote, verification:"verified"|"partial"|"unverified",
 //                     source_url, source_title, lens, lens_label,
+//                     receipt_url? (link that highlights the quote on the page), name_on_page? (bool),
 //                     similarity? (optional 0-100; UI derives it from divergence when missing)}
 //   {type:"status",  id, status:"thriving"|"active"|"pivoted"|"shut_down"|"quiet"|"unknown",
 //                     signal, signal_url, signal_date, conflict}
