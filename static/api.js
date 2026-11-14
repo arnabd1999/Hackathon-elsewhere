@@ -27,7 +27,9 @@
 const params = new URLSearchParams(location.search);
 
 export const CONFIG = {
-  USE_MOCK: params.get("live") !== "1",
+  // Live by default when the backend serves the page (localhost:8000 or the public deploy).
+  // Mock with ?mock=1, or automatically on the static-only preview server (port 5178, no backend).
+  USE_MOCK: params.get("mock") === "1" || (location.port === "5178" && params.get("live") !== "1"),
   // Mock key only. Real keys live in the backend .env, never in the browser.
   API_KEY: "mock-elsewhere-key-0000",
   BASE_URL: "",

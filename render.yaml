@@ -1,0 +1,26 @@
+# Render Blueprint: deploys Elsewhere (FastAPI + static frontend) as one public web service.
+# Secrets are NOT in this file: Render asks for YDC_API_KEY when you create the Blueprint
+# (sync: false), and you can change it later under the service's Environment tab.
+services:
+  - type: web
+    name: elsewhere
+    runtime: python
+    plan: free            # sleeps after 15 min idle: open the URL a minute before the demo
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/demos
+    envVars:
+      - key: YDC_API_KEY
+        sync: false       # entered in the Render dashboard, never committed
+      - key: LLM_PROVIDER
+        value: you        # You.com Research as the model; only YDC_API_KEY needed
+      - key: LIVE_RUNS_PER_HOUR
+        value: "20"       # each live run costs ~$0.40 of You.com credits; replays are free
+      - key: DEEP_DIVES_PER_HOUR
+        value: "30"
+      - key: RECORD_RUNS
+        value: "0"        # don't list visitors' ideas in the public Replay menu
+      - key: MAX_PAGES
+        value: "14"
+      - key: LLM_CONCURRENCY
+        value: "6"

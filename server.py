@@ -3,6 +3,7 @@
 Run:  uvicorn server:app --reload --port 8000   then open http://localhost:8000
 """
 import asyncio
+import collections
 import json
 import os
 import re
@@ -29,6 +30,35 @@ CACHE = ROOT / "cache"
 CACHE.mkdir(exist_ok=True)
 SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
+# Public-deploy guards (all off by default for local dev; render.yaml turns them on).
+# Each live run spends You.com credits (~$0.40), so cap paid calls per rolling hour; replays stay free.
+LIVE_RUNS_PER_HOUR = int(os.getenv("LIVE_RUNS_PER_HOUR", "0"))    # 0 = unlimited
+DEEP_DIVES_PER_HOUR = int(os.getenv("DEEP_DIVES_PER_HOUR", "0"))  # 0 = unlimited
+# On a public site, don't record visitors' ideas into the shared Replay list.
+RECORD_RUNS = os.getenv("RECORD_RUNS", "1") != "0"
+
+
+class HourlyCap:
+    """At most `limit` calls in any rolling hour, per server process. limit <= 0 means no cap."""
+
+    def __init__(self, limit: int, window: float = 3600.0):
+        self.limit, self.window, self.calls = limit, window, collections.deque()
+
+    def allow(self, now: float | None = None) -> bool:
+        if self.limit <= 0:
+            return True
+        now = time.time() if now is None else now
+        while self.calls and now - self.calls[0] >= self.window:
+            self.calls.popleft()
+        if len(self.calls) >= self.limit:
+            return False
+        self.calls.append(now)
+        return True
+
+
+explore_cap = HourlyCap(LIVE_RUNS_PER_HOUR)
+deep_dive_cap = HourlyCap(DEEP_DIVES_PER_HOUR)
+
 app = FastAPI(title="Elsewhere")
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
@@ -48,6 +78,12 @@ def index():
 
 @app.get("/api/explore")
 async def api_explore(idea: str):
+    if not explore_cap.allow():
+        async def capped():
+            yield _sse({"type": "error", "msg": "The live demo has hit its hourly limit of live runs. "
+                                               "Pick a recorded run from Replay, or try again later."})
+        return StreamingResponse(capped(), media_type="text/event-stream", headers=SSE_HEADERS)
+
     async def gen():
         events = []
         try:
@@ -59,7 +95,7 @@ async def api_explore(idea: str):
             events.append({"t": time.time(), "ev": ev})
             yield _sse(ev)
         finally:
-            if any(e["ev"]["type"] == "universe" for e in events):
+            if RECORD_RUNS and any(e["ev"]["type"] == "universe" for e in events):
                 (CACHE / f"{_slug(idea)}.json").write_text(json.dumps({"idea": idea, "events": events}))
 
     return StreamingResponse(gen(), media_type="text/event-stream", headers=SSE_HEADERS)
@@ -114,6 +150,8 @@ class DeepDiveReq(BaseModel):
 @app.post("/api/deep-dive")
 async def deep_dive(req: DeepDiveReq):
     """Cited You.com Research answer on why one company succeeded or failed."""
+    if not deep_dive_cap.allow():
+        raise HTTPException(429, "Deep dives have hit their hourly limit on this demo; try again later.")
     facts = [f"{k}: {v}" for k, v in (("one-liner", req.one_liner), ("website", req.website),
                                       ("industry", req.industry), ("last known status", req.status),
                                       ("last known signal", req.signal)) if v]
