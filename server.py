@@ -9,9 +9,11 @@ import re
 import time
 from pathlib import Path
 
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, field_validator
 
 try:
     from dotenv import load_dotenv
@@ -19,6 +21,7 @@ try:
 except ImportError:
     pass
 
+import you  # noqa: E402
 from pipeline import explore  # noqa: E402
 
 ROOT = Path(__file__).parent
@@ -90,6 +93,44 @@ async def replay(file: str, speed: float = 1.0):
             yield _sse(item["ev"])
 
     return StreamingResponse(gen(), media_type="text/event-stream", headers=SSE_HEADERS)
+
+
+class DeepDiveReq(BaseModel):
+    name: str
+    one_liner: str = ""
+    website: str = ""
+    status: str = ""
+    signal: str = ""
+    industry: str = ""
+
+    @field_validator("name")
+    @classmethod
+    def _name_not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("name must not be blank")
+        return v.strip()
+
+
+@app.post("/api/deep-dive")
+async def deep_dive(req: DeepDiveReq):
+    """Cited You.com Research answer on why one company succeeded or failed."""
+    facts = [f"{k}: {v}" for k, v in (("one-liner", req.one_liner), ("website", req.website),
+                                      ("industry", req.industry), ("last known status", req.status),
+                                      ("last known signal", req.signal)) if v]
+    question = (
+        f"Why did or does the company {req.name} succeed or fail? What happened to it most recently? "
+        "What should a founder building the same core idea somewhere else learn from it? "
+        f"Known facts - {'; '.join(facts) or 'none'}."
+    )
+    try:
+        async with httpx.AsyncClient() as client:
+            data = await you.research(client, question, effort="lite")
+        out = data.get("output") or {}
+        sources = [{"title": s.get("title") or s["url"], "url": s["url"]}
+                   for s in (out.get("sources") or []) if isinstance(s, dict) and s.get("url")][:8]
+        return {"summary": out.get("content") or "", "sources": sources}
+    except Exception:  # noqa: BLE001
+        raise HTTPException(502, "Research service failed; try again.") from None
 
 
 if __name__ == "__main__":
