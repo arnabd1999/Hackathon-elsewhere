@@ -197,7 +197,6 @@
   #privacy[hidden]{display:none}
   #privacy button{font:inherit;color:inherit;background:none;border:1px solid var(--line, rgba(255,255,255,.18));border-radius:999px;padding:2px 9px;cursor:pointer}
   #privacy button:hover{color:var(--text, #fff)}
-  .privnote{font-size:12px;color:var(--dim);margin-top:10px;opacity:.85}
   #ticker span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .spinner{width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--sun);border-radius:50%;animation:rot .8s linear infinite;flex:none}
   #ticker.done .spinner{animation:none;border-color:var(--ok)}
@@ -230,9 +229,6 @@
   .bigsearch .btn:hover{background:var(--sun)}
   body.landing .ringlbl,body.focus .ringlbl{display:none}
   .dart:focus{outline:none} .dart:focus-visible .body{stroke:var(--sun);stroke-width:3}
-  .examples{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px;max-width:760px}
-  .examples button{font-size:12.5px;background:rgba(18,18,18,.7);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--dim)}
-  .examples button:hover{color:var(--text);border-color:var(--line2)}
   .threeup{display:flex;gap:28px;margin-top:38px;color:var(--dim);font-size:13px;flex-wrap:wrap;justify-content:center}
   .threeup b{color:var(--text)}
 
@@ -492,8 +488,6 @@
         <input id="idea" aria-label="Describe your idea" placeholder="Describe your idea in one sentence…" autofocus>
         <button class="btn" type="submit">Explore →</button>
       </form>
-      <div class="examples" id="examples"></div>
-      <p class="privnote">Your idea is sent to You.com to search the live web, under You.com's data policy. We don't store it.</p>
     </div>
   </section>
 
@@ -511,9 +505,6 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const STATUS = {thriving:["Thriving","var(--ok)"], active:["Active","var(--ok)"], pivoted:["Pivoted","var(--warn)"],
   shut_down:["Shut down","var(--dead)"], quiet:["Quiet this year","var(--dim)"], unknown:["Unknown","var(--dim)"]};
-// both have recorded runs, so a click replays instantly
-const EXAMPLES = ["An SMS assistant that helps NYC deli owners track daily cash flow",
-  "An SMS marketplace where smallholder farmers in Kenya sell produce directly to restaurants"];
 
 let S = null, cancel = null;
 
@@ -1253,19 +1244,6 @@ async function start(kind, arg, idea){
 function submit(v){ v = v.trim(); if (v) start("explore", v, v); }
 $("heroForm").onsubmit = e => { e.preventDefault(); submit($("idea").value); };
 $("topForm").onsubmit = e => { e.preventDefault(); submit($("ideaTop").value); };
-$("examples").innerHTML = EXAMPLES.map(x => `<button type="button">${esc(x)}</button>`).join("");
-// example ideas: replay the recorded run when one exists (instant, free); otherwise just fill the box, never start a paid run on one click
-async function wireExamples(){
-  const demos = CONFIG.USE_MOCK ? [] : await API.listDemos().catch(() => []);
-  const key = t => String(t || "").toLowerCase().slice(0, 40);
-  $("examples").querySelectorAll("button").forEach(b => b.onclick = () => {
-    const d = demos.find(d => key(d.idea) === key(b.textContent));
-    if (CONFIG.USE_MOCK) submit(b.textContent);
-    else if (d) start("replay", d.file, d.idea);
-    else { $("idea").value = b.textContent; $("idea").focus(); }
-  });
-}
-wireExamples();
 $("demos").onchange = e => { const o = e.target.selectedOptions[0]; if (!o.value) return; start("replay", o.value, o.dataset.idea); e.target.value = ""; e.target.blur(); /* hand arrow keys to the board */ };
 document.addEventListener("keydown", e => { if (e.key === "Escape"){ closeDrawer("left"); closeDrawer("right"); } });
 // arrow keys on the board: Up/Down = next company closer to / further from YOU, Left/Right = previous/next around the circle
