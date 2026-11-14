@@ -1,0 +1,17 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# local-only Claude / OpenCrawl setup (never commit)
+.claude/settings.local.json
+.claude/skills/opencrawl/
+CLAUDE.local.md
+
+# deps / build
+node_modules/
+.next/
+dist/
+__pycache__/
+.venv/
+.DS_Store
