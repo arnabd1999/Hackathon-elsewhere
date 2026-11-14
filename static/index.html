@@ -500,9 +500,9 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const STATUS = {thriving:["Thriving","var(--ok)"], active:["Active","var(--ok)"], pivoted:["Pivoted","var(--warn)"],
   shut_down:["Shut down","var(--dead)"], quiet:["Quiet this year","var(--dim)"], unknown:["Unknown","var(--dim)"]};
+// both have recorded runs, so a click replays instantly
 const EXAMPLES = ["An SMS assistant that helps NYC deli owners track daily cash flow",
-  "A marketplace for restaurants to sell surplus food at closing time",
-  "Peer tutoring for community-college students over WhatsApp"];
+  "An SMS marketplace where smallholder farmers in Kenya sell produce directly to restaurants"];
 
 let S = null, cancel = null;
 
@@ -1134,29 +1134,18 @@ function submit(v){ v = v.trim(); if (v) start("explore", v, v); }
 $("heroForm").onsubmit = e => { e.preventDefault(); submit($("idea").value); };
 $("topForm").onsubmit = e => { e.preventDefault(); submit($("ideaTop").value); };
 $("examples").innerHTML = EXAMPLES.map(x => `<button type="button">${esc(x)}</button>`).join("");
-$("examples").querySelectorAll("button").forEach(b => b.onclick = () => { $("idea").value = b.textContent; submit(b.textContent); });
-// live: show real companies from recorded runs; clicking one replays that run for free. Mock or failure keeps the idea pills.
-async function loadShowcase(){
-  if (CONFIG.USE_MOCK) return;
-  try {
-    const r = await fetch("/api/showcase"); if (!r.ok) return;
-    const all = await r.json();
-    const items = (Array.isArray(all) ? all : []).filter(x => x && x.name).slice(0, 4);
-    if (!items.length) return;
-    const demos = await API.listDemos().catch(() => []);
-    const fileFor = idea => (demos.find(d => d.idea === idea) || {}).file || "";
-    const st = x => STATUS[x.status] && x.status !== "unknown" ? ` · ${STATUS[x.status][0]}` : "";
-    const box = $("examples"); box.className = "showcase";
-    box.innerHTML = items.map(x => `<button type="button" data-file="${esc(fileFor(x.idea))}" data-idea="${esc(x.idea || "")}" title="${esc(x.evidence_quote ? `“${x.evidence_quote}”` : x.one_liner || "")}">
-      <span class="nm">${esc(x.name)}</span><span class="ind">${esc((x.industry || "") + st(x))}</span>
-      <span class="ol">${esc(x.one_liner || "")}</span>${x.idea ? `<span class="from">Found for: ${esc(x.idea)}</span>` : ""}</button>`).join("");
-    box.querySelectorAll("button").forEach(b => b.onclick = () => {
-      if (b.dataset.file) start("replay", b.dataset.file, b.dataset.idea);
-      else { $("idea").value = b.dataset.idea; $("idea").focus(); }   // nothing recorded to replay: never start a paid run on one click
-    });
-  } catch {}
+// example ideas: replay the recorded run when one exists (instant, free); otherwise just fill the box, never start a paid run on one click
+async function wireExamples(){
+  const demos = CONFIG.USE_MOCK ? [] : await API.listDemos().catch(() => []);
+  const key = t => String(t || "").toLowerCase().slice(0, 40);
+  $("examples").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const d = demos.find(d => key(d.idea) === key(b.textContent));
+    if (CONFIG.USE_MOCK) submit(b.textContent);
+    else if (d) start("replay", d.file, d.idea);
+    else { $("idea").value = b.textContent; $("idea").focus(); }
+  });
 }
-loadShowcase();
+wireExamples();
 $("demos").onchange = e => { const o = e.target.selectedOptions[0]; if (!o.value) return; start("replay", o.value, o.dataset.idea); e.target.value = ""; };
 document.addEventListener("keydown", e => { if (e.key === "Escape"){ closeDrawer("left"); closeDrawer("right"); } });
 $("seeall").onclick = () => { S.touched = true; zoomOut(); };
