@@ -247,6 +247,12 @@
   .name{font-size:21px;font-weight:800;letter-spacing:-.3px;line-height:1.15}
   .sub{color:var(--dim)}
   .tags{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .lks{display:flex;gap:8px;margin-top:14px}
+  .lk{flex:1;text-align:center;font-size:12.5px;font-weight:500;text-decoration:none;color:var(--text);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;
+    transition:border-color .2s,background .2s,color .2s}
+  .lk:hover{border-color:#555;background:#161616}
+  .lk.primary{background:#fff;color:#000;border-color:#fff}
+  .lk.primary:hover{background:var(--sun);border-color:var(--sun);color:#1a1405}
   .tag{font-size:11px;border-radius:999px;padding:3px 9px;border:1px solid var(--line);color:var(--dim)}
   .cmp{width:100%;border-collapse:collapse;font-size:12.5px}
   .cmp td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -697,6 +703,8 @@ function renderHeadline(){
     .map(([id, label, c]) => `<button class="tab ${S.view === id ? "on" : ""}" role="tab" data-v="${id}">${label}<span class="n">${c}</span></button>`).join("")}</div>`;
   document.querySelectorAll("#filters .tab").forEach(b => b.onclick = () => setView(b.dataset.v));
 }
+// only open real web links (never javascript: or data: URLs from upstream data)
+const safeUrl = s => { try { const x = new URL(s); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
 const isDead = u => u.status === "shut_down" || u.lens === "graveyard";
 function setView(v){
   if (S.view === v) return;
@@ -806,7 +814,9 @@ function renderDetail(u){
   const take = u.kind === "inspiration" && u.transfer ? [`Why ${(u.industry || "this industry").toLowerCase()}?`, u.transfer]
     : u.relationship === "collaborator" && u.relationship_reason ? ["How you could team up", u.relationship_reason] : ["The lesson for you", u.lesson];
   const nDiff = (u.divergent_axes || []).length;
-  const receipt = u.receipt_url || u.source_url;
+  const receipt = safeUrl(u.receipt_url || u.source_url), site = safeUrl(u.website);
+  const webLink = site ? `<a class="lk primary" href="${esc(site)}" target="_blank" rel="noopener">Visit website ↗</a>`
+    : `<a class="lk primary" href="https://www.google.com/search?q=${encodeURIComponent(u.name + " " + (u.industry || ""))}" target="_blank" rel="noopener">Search the web ↗</a>`;
   $("detail").innerHTML = `<div class="fadein">
     <button class="back" id="back">← Ranked list</button>
     <div class="card">
@@ -816,10 +826,11 @@ function renderDetail(u){
         <span class="tag" style="color:${colorOf(u)};border-color:${colorOf(u)}">${esc(rel)}</span>
         <span class="tag">${st ? `<span style="color:${st[1]}">● ${st[0]}</span>` : "Checking if alive…"}</span>
       </div>
+      <div class="lks">${webLink}${receipt ? `<a class="lk" href="${esc(receipt)}" target="_blank" rel="noopener" title="${esc(u.source_title || "")}">Source ↗</a>` : ""}</div>
     </div>
     <div class="card" style="${u.kind === "inspiration" ? "border-color:#333333" : ""}"><div class="takeaway"><small>${take[0]}</small>${esc(take[1])}</div></div>
 
-    <details class="sec"><summary>Where they split from you<span class="hint">${nDiff} of 5 choices differ</span></summary><div>
+    <details class="sec"><summary>Where they split from you<span class="hint">${u.kind === "inspiration" ? "different industry" : `${nDiff} of 5 choices differ`}</span></summary><div>
       <div style="margin-bottom:10px">${esc(u.divergence_summary)}</div>
       <table class="cmp"><tr><td></td><td style="color:var(--dim)">You</td><td style="color:var(--dim)">Them</td></tr>
       ${AXES.map(a => { const d = (u.divergent_axes || []).includes(a);
