@@ -27,15 +27,25 @@ export async function POST(req: Request) {
   );
 
   const encoder = new TextEncoder();
+  let cancelled = false;
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let prev = 0;
-      for (const { at, event } of run.events) {
-        if (!fast && at > prev) await new Promise((r) => setTimeout(r, at - prev));
-        prev = at;
-        controller.enqueue(encoder.encode(encodeEvent(event)));
+      try {
+        for (const { at, event } of run.events) {
+          if (cancelled) return;
+          if (!fast && at > prev) await new Promise((r) => setTimeout(r, at - prev));
+          if (cancelled) return;
+          prev = at;
+          controller.enqueue(encoder.encode(encodeEvent(event)));
+        }
+        controller.close();
+      } catch {
+        // client aborted mid-stream; nothing to do
       }
-      controller.close();
+    },
+    cancel() {
+      cancelled = true;
     },
   });
 

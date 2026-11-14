@@ -38,6 +38,6 @@ describe("ndjson", () => {
     const out = await collect(
       streamOf([encodeEvent(concept), '{"type":"nope"}\n', encodeEvent(done)]),
     );
-    expect(out).toHaveLength(2);
+    expect(out).toEqual([concept, done]);
   });
 });
