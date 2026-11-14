@@ -18,9 +18,10 @@ import httpx
 
 import llm
 import prompts
+import status
 import you
 from prompts import AXES
-from verify import verify_quote
+from verify import check_receipt
 
 MAX_PAGES = int(os.getenv("MAX_PAGES", "18"))
 LLM_CONCURRENCY = int(os.getenv("LLM_CONCURRENCY", "6"))
@@ -63,6 +64,7 @@ def _key(name: str) -> str:
 def _build_universe(page: dict, c: dict, core: dict) -> dict:
     theirs = {a: str((c.get("execution") or {}).get(a, "unknown")) for a in AXES}
     div = [a for a in (c.get("divergent_axes") or []) if a in AXES]
+    receipt = check_receipt(c.get("evidence_quote", ""), page.get("markdown") or "", c["name"], page.get("url"))
     return {
         "id": hashlib.md5(_key(c["name"]).encode()).hexdigest()[:10],
         "name": c["name"],
@@ -71,7 +73,9 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
         "source_url": page.get("url"),
         "source_title": page.get("title", ""),
         "evidence_quote": c.get("evidence_quote", ""),
-        "verification": verify_quote(c.get("evidence_quote", ""), page.get("markdown") or ""),
+        "verification": receipt["verification"],
+        "name_on_page": receipt["name_on_page"],
+        "receipt_url": receipt["receipt_url"],
         "execution": theirs,
         "divergent_axes": div,
         "divergence": len(div),
@@ -84,34 +88,6 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
         "lens": page.get("lens", "parallel"),
         "lens_label": page.get("lens_label", "Web"),
         "relationship_reason": c.get("relationship_reason", ""),
-    }
-
-
-async def _status(client, sem, u: dict) -> dict:
-    base = {"type": "status", "id": u["id"]}
-    try:
-        res = await you.search(client, f'"{u["name"]}" funding OR launch OR shut down OR acquired',
-                               count=6, freshness="year")
-    except Exception as e:  # noqa: BLE001
-        return {**base, "status": "unknown", "signal": f"status lookup failed: {e}"}
-    if not res:
-        return {**base, "status": "quiet", "signal": "No coverage found in the past year."}
-    items = [{"title": r.get("title"), "url": r.get("url"), "date": r.get("page_age"),
-              "description": r.get("description")} for r in res]
-    async with sem:
-        try:
-            out = await llm.complete_json(client, prompts.STATUS, prompts.status_user(u["name"], u["one_liner"], items))
-        except Exception:  # noqa: BLE001
-            return {**base, "status": "unknown", "signal": ""}
-    by_url = {i["url"]: i for i in items}
-    src = by_url.get(out.get("signal_url"))
-    return {
-        **base,
-        "status": out.get("status", "unknown") if src else "unknown",
-        "signal": out.get("signal", "") if src else "",
-        "signal_url": src["url"] if src else None,  # receipt: must be a URL we actually retrieved
-        "signal_date": (src or {}).get("date"),
-        "conflict": out.get("conflict", ""),
     }
 
 
@@ -189,7 +165,7 @@ async def explore(idea: str):
             u = _build_universe(page, c, core)
             found[k] = u
             yield {"type": "universe", **u}
-            status_tasks.append(asyncio.create_task(_status(client, sem, u)))
+            status_tasks.append(asyncio.create_task(status.check_status(client, sem, u)))
         await closer
 
         # 5. Is each universe alive today?
