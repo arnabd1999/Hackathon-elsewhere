@@ -477,7 +477,7 @@ function drawBoard(core){
   el("circle", {cx:C, cy:C, r:BAND_R, class:"orbit"}, g);
   [150, 270].forEach(r => el("circle", {cx:C, cy:C, r, class:"ring faint"}, g));
   // say what distance means, right on the rings
-  [[150, "Near-twins", ""], [270, "Same industry, different approach", ""], [BAND_R, "Elsewhere · other industries", "gold"]].forEach(([r, txt, cls]) => {
+  [[150, "Near-twins", ""], [270, "Same industry, different approach", ""]].forEach(([r, txt, cls]) => {
     const [x, y] = polar(r, -90); const t = el("text", {x, y: y - 8, "text-anchor":"middle", class:`ringlbl ${cls}`}, g); t.textContent = txt;
   });
   const b = $("bull"); b.innerHTML = "";
