@@ -296,9 +296,21 @@
     background:rgba(16,16,16,.9);border:1px solid var(--line2);color:var(--text);border-radius:999px;padding:8px 16px;font-size:13px;cursor:pointer;
     backdrop-filter:blur(10px);transition:opacity .3s,transform .3s,border-color .2s}
   #seeall:hover{border-color:var(--sun)}
+  #tour{position:absolute;left:50%;bottom:50px;z-index:5;transform:translate(-50%,8px);display:flex;align-items:center;gap:6px;overflow:hidden;
+    background:rgba(14,14,14,.92);border:1px solid var(--line2);border-radius:999px;padding:5px 6px 5px 6px;font-size:13px;color:var(--dim);
+    backdrop-filter:blur(12px);box-shadow:0 10px 40px #000a;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s}
+  body.touring[data-view=elsewhere] #tour{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+  body.touring #seeall{display:none}
+  #tour span{padding:0 6px;white-space:nowrap} #tour b{font-weight:600}
+  #tour button{border:0;background:#1b1b1b;color:var(--text);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;line-height:1}
+  #tour button:hover{background:#2a2a2a}
+  #tour button.all{width:auto;border-radius:999px;padding:0 12px;font-size:12.5px;margin-left:4px}
+  #tour .prog{position:absolute;left:0;bottom:0;height:2px;background:var(--sun);animation:prog 6.5s linear forwards}
+  @keyframes prog{from{width:0}to{width:100%}}
+  @media (min-width:961px){ body.show-right #tour{left:calc(50% - 195px)} }
   body.zoomed[data-view=elsewhere] #seeall{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
   @media (min-width:961px){ body.show-right #seeall{left:calc(50% - 195px)} }
-  #legend .sep{width:1px;height:12px;background:var(--line2)}
+  #legend .note{color:var(--faint);padding-left:14px;border-left:1px solid var(--line2)}
   #legend .pulse-i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--dim);box-shadow:0 0 0 3px rgba(255,255,255,.08)}
   #globe{cursor:grab;touch-action:none} #globe.drag{cursor:grabbing} #globe.hot{cursor:pointer}
   body[data-view=world] #globe,body[data-view=grave] #grave{opacity:1;pointer-events:auto}
@@ -440,8 +452,8 @@
     <button class="corner" id="openLeft" type="button">◎ Your idea</button>
     <button class="corner" id="openRight" type="button">☰ List</button>
     <button id="seeall" type="button">⤢ See all</button>
-    <div id="legend"><span><i class="dot" style="background:conic-gradient(#ffcf4a,#5fe3b3,#b48cff,#ff8fd0,#ffcf4a)"></i>Other industries</span><span><i class="dot" style="background:var(--collab)"></i>Partner</span><span><i class="dot" style="background:var(--comp)"></i>Competitor</span>
-      <i class="sep"></i><span>Bigger = more relevant</span><span><i class="pulse-i"></i>Growing</span><span>✕ Shut down</span><span style="opacity:.45">● Unverified</span></div>
+    <div id="tour" role="group" aria-label="Top matches"></div>
+    <div id="legend"><span><i class="dot" style="background:conic-gradient(#ffcf4a,#5fe3b3,#b48cff,#ff8fd0,#ffcf4a)"></i>Other industries</span><span><i class="dot" style="background:var(--collab)"></i>Partner</span><span><i class="dot" style="background:var(--comp)"></i>Competitor</span><span class="note">Bigger = more relevant</span></div>
     <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
     <div id="tip"></div>
 
@@ -527,7 +539,9 @@ function place(u){
   // other industries: one cluster per industry, each cluster at its own spot on the gold orbit
   if (u.kind === "inspiration"){
     const key = (u.industry || "Other").trim();
-    if (!(key in S.indAngle)){ const i = Object.keys(S.indAngle).length; S.indAngle[key] = -60 + i * 72 + (i >= 5 ? 36 : 0); }
+    // clusters sit on the left and right of the orbit only, never straight above (tabs) or below (legend)
+    const SLOTS = [-25, 155, 15, -165, -45, 135, 35, -145, -5, 175];
+    if (!(key in S.indAngle)){ const i = Object.keys(S.indAngle).length; S.indAngle[key] = SLOTS[i % SLOTS.length] + Math.floor(i / SLOTS.length) * 12; }
     const m = S.indCount[key] = (S.indCount[key] || 0) + 1;
     drawClusters();
     return polar(BAND_R, S.indAngle[key] + [0, -11, 11, -22, 22][(m - 1) % 5]);
@@ -543,7 +557,7 @@ function drawClusters(){
     const [x, y] = polar(BAND_R + 58, ang);
     const anchor = Math.abs(x - C) < 60 ? "middle" : x > C ? "start" : "end";
     const t = el("text", {x, y: y + 5, class:"cluster", "text-anchor":anchor}, g); t.style.fill = indColor(key);
-    t.textContent = key.length > 20 ? key.slice(0, 19) + "…" : key;
+    t.textContent = key.length > 28 ? key.slice(0, 27) + "…" : key;
     const n = S.indCount[key]; if (n > 1){ const s = el("tspan", {}, t); s.textContent = ` · ${n}`; }
   }
 }
@@ -560,11 +574,11 @@ function flyTo(target, ms = 1000){
   vbRaf = requestAnimationFrame(step);
 }
 function setVB(b){ vb = b; $("board").setAttribute("viewBox", vb.join(" ")); document.body.classList.toggle("zoomed", vb[2] < VB0[2] * .85); }
-function zoomOut(){ if (S.selected || document.body.classList.contains("show-right")) closeDrawer("right"); flyTo(VB0, 800); }
+function zoomOut(){ if (S.tour) endTour(false); if (S.selected || document.body.classList.contains("show-right")) closeDrawer("right"); flyTo(VB0, 800); }
 // scroll to zoom around the cursor
 $("board").addEventListener("wheel", e => {
   if (!document.body.classList.contains("running") || S.view !== "elsewhere") return;
-  e.preventDefault(); S.touched = true; cancelAnimationFrame(vbRaf);
+  e.preventDefault(); S.touched = true; pauseTour(); cancelAnimationFrame(vbRaf);
   const pt = $("board").createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
   const p = pt.matrixTransform($("board").getScreenCTM().inverse());
   const w = Math.max(380, Math.min(VB0[2], vb[2] * Math.exp(e.deltaY * .0015)));
@@ -577,12 +591,40 @@ $("board").addEventListener("click", e => {
   if (!e.target.closest(".dart") && document.body.classList.contains("zoomed")) zoomOut();
 });
 // after a run, open on the most useful other-industry match so the first screen tells a story
+// guided tour: after a run, glide through the top 3 matches (different industries first), then show everything
+function topMatches(n = 3){
+  const ins = Object.values(S.u).filter(u => u.kind === "inspiration").sort((a, b) => insScore(b) + !!b.transfer - insScore(a) - !!a.transfer);
+  const out = [], seen = new Set();
+  for (const u of ins) if (!seen.has(indKey(u)) && out.length < n){ out.push(u); seen.add(indKey(u)); }
+  for (const u of ins) if (!out.includes(u) && out.length < n) out.push(u);
+  const par = Object.values(S.u).filter(u => u.kind !== "inspiration").sort((a, b) => (similarity(b) ?? 0) - (similarity(a) ?? 0));
+  for (const u of par) if (out.length < n) out.push(u);
+  return out.map(u => u.id);
+}
 function autoFocus(){
   if (S.touched || S.selected) return;
-  const rank = {thriving:3, active:2, pivoted:1};
-  const best = Object.values(S.u).filter(u => u.kind === "inspiration")
-    .sort((a, b) => ((b.verification === "verified") * 4 + (rank[b.status] || 0) + !!b.transfer) - ((a.verification === "verified") * 4 + (rank[a.status] || 0) + !!a.transfer))[0];
-  if (best) select(best.id);
+  const ids = topMatches(); if (!ids.length) return;
+  S.tour = {ids, i:0, auto:true, timer:0}; tourStep();
+}
+function tourStep(){
+  const t = S.tour; if (!t) return;
+  select(t.ids[t.i]); renderTour(); clearTimeout(t.timer);
+  if (t.auto) t.timer = setTimeout(() => { if (S.tour !== t || !t.auto) return;
+    if (t.i < t.ids.length - 1){ t.i++; tourStep(); } else endTour(true); }, 6500);
+}
+function tourGo(d){ const t = S.tour; if (!t) return; t.auto = false; t.i = (t.i + d + t.ids.length) % t.ids.length; tourStep(); }
+function pauseTour(){ if (S.tour && S.tour.auto){ S.tour.auto = false; clearTimeout(S.tour.timer); renderTour(); } }
+function endTour(zoomAll){ if (!S.tour) return; clearTimeout(S.tour.timer); S.tour = null; renderTour(); if (zoomAll) zoomOut(); }
+function renderTour(){
+  const t = S.tour; document.body.classList.toggle("touring", !!t);
+  if (!t){ $("tour").innerHTML = ""; return; }
+  const u = S.u[t.ids[t.i]];
+  $("tour").innerHTML = `<button data-t="-1" aria-label="Previous">‹</button>
+    <span>Top match ${t.i + 1} of ${t.ids.length} · <b style="color:${colorOf(u)}">${esc(u.name)}</b></span>
+    <button data-t="1" aria-label="Next">›</button><button data-t="all" class="all">See all</button>
+    ${t.auto ? `<i class="prog"></i>` : ""}`;
+  $("tour").querySelectorAll("button").forEach(b => b.onclick = e => { e.stopPropagation();
+    b.dataset.t === "all" ? endTour(true) : tourGo(+b.dataset.t); });
 }
 function focusBox(u){
   // centre between you and the planet, leaning toward the planet, and tighter than before
@@ -616,6 +658,8 @@ function relax(){
 /* ---------- events ---------- */
 function reset(){
   if (cancel) cancel();
+  if (S?.tour) clearTimeout(S.tour.timer);
+  document.body.classList.remove("touring");
   S = {core:null, u:{}, order:[], slot:{}, indAngle:{}, indCount:{}, selected:null, listOpen:false, filter:"all", view:"elsewhere", done:false, stage:""};
   document.body.classList.remove("show-left", "show-right", "focus"); document.body.dataset.view = "elsewhere"; stopGlobe();
   cancelAnimationFrame(vbRaf); setVB(VB0.slice());
@@ -666,7 +710,7 @@ function onUniverse(ev){
   el("path", {d:"M-5,-5 L5,5 M5,-5 L-5,5", class:"x"}, g);
   const t = el("text", {y:R0 + 17, "text-anchor":"middle", class:"lbl"}, g); t.textContent = u.name.length > 18 ? u.name.slice(0,17) + "…" : u.name;
   u.g = g; u.body = body;
-  g.addEventListener("click", () => { S.touched = true; select(u.id); });
+  g.addEventListener("click", () => { S.touched = true; pauseTour(); select(u.id); });
   g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(u.id); } });
   g.addEventListener("mouseenter", () => hover(u.id, true)); g.addEventListener("mouseleave", () => hover(u.id, false));
   requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transform = `translate(${x}px,${y}px)`; g.style.opacity = ""; }));
@@ -708,7 +752,7 @@ const safeUrl = s => { try { const x = new URL(s); return /^https?:$/.test(x.pro
 const isDead = u => u.status === "shut_down" || u.lens === "graveyard";
 function setView(v){
   if (S.view === v) return;
-  S.touched = true;
+  S.touched = true; pauseTour();
   S.view = v; document.body.dataset.view = v;
   if (v !== "elsewhere") flyTo(VB0, 500); else if (S.selected) flyTo(focusBox(S.u[S.selected]));
   if (v === "world") startGlobe(); else stopGlobe();
@@ -802,9 +846,10 @@ function deselect(){
   $("trails").querySelectorAll(".keep").forEach(t => t.remove()); renderRight();
   if (!S.listOpen) document.body.classList.remove("show-right");
 }
-function openList(){ S.listOpen = true; deselect(); document.body.classList.add("show-right"); document.body.classList.remove("show-left"); }
+function openList(){ endTour(false); S.listOpen = true; deselect(); document.body.classList.add("show-right"); document.body.classList.remove("show-left"); }
 function closeDrawer(which){
   if (which === "left") return document.body.classList.remove("show-left");
+  endTour(false);
   S.listOpen = false; deselect();
 }
 function renderDetail(u){
