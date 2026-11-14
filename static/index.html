@@ -45,11 +45,31 @@
     border:1px solid #5a4520;background:#1d160a;border-radius:999px;padding:4px 10px;white-space:nowrap}
 
   /* ---------- layout ---------- */
-  main{position:relative;display:grid;grid-template-columns:300px 1fr 380px;height:calc(100% - 60px)}
-  aside{position:relative;z-index:2;overflow:auto;padding:18px;opacity:0;transform:translateX(-12px);transition:opacity .6s .2s,transform .6s .2s}
-  #right{transform:translateX(12px)}
-  body.running aside,body.running #right{opacity:1;transform:none}
-  #left{border-right:1px solid var(--line)} #right{border-left:1px solid var(--line)}
+  html{overflow-x:hidden}
+  main{position:relative;height:calc(100% - 60px);overflow:hidden}
+  aside{position:absolute;top:0;bottom:0;z-index:8;width:360px;max-width:100%;overflow:auto;padding:18px 18px 40px;
+    background:rgba(9,10,17,.94);backdrop-filter:blur(16px);opacity:0;pointer-events:none;
+    transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .3s}
+  #left{left:0;border-right:1px solid var(--line);transform:translateX(-100%)}
+  #right{right:0;width:390px;border-left:1px solid var(--line);transform:translateX(100%)}
+  body.show-left #left,body.show-right #right{transform:none;opacity:1;pointer-events:auto}
+  .xbtn{position:sticky;top:0;float:right;z-index:2;background:var(--panel-solid);border:1px solid var(--line);color:var(--dim);
+    width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1}
+  .xbtn:hover{color:var(--text);border-color:var(--line2)}
+  .corner{position:absolute;top:18px;z-index:4;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim);
+    background:rgba(12,14,24,.8);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;transition:all .2s}
+  .corner:hover{color:var(--text);border-color:var(--line2)}
+  #openLeft{left:18px} #openRight{right:18px}
+  body.landing .corner{opacity:0;pointer-events:none}
+  .sec{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);margin-bottom:10px}
+  .sec>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:600;font-size:13px;color:var(--text)}
+  .sec>summary::-webkit-details-marker{display:none}
+  .sec>summary::after{content:"+";color:var(--dim);font-weight:400;font-size:16px}
+  .sec[open]>summary::after{content:"–"}
+  .sec>summary .hint{color:var(--dim);font-weight:400;font-size:12px;margin-left:auto;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+  .sec>div{padding:0 14px 14px}
+  .takeaway{font-size:15px;font-weight:600;line-height:1.4}
+  .takeaway small{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;color:var(--dim);font-weight:600;margin-bottom:6px}
   h3{font-size:11px;text-transform:uppercase;letter-spacing:1.3px;color:var(--dim);margin:20px 0 9px;font-weight:600}
   h3:first-child{margin-top:0}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
@@ -70,7 +90,7 @@
   .q b{color:var(--text);font-weight:500}
 
   /* ---------- stage ---------- */
-  #stage{position:relative;overflow:hidden;min-height:0}
+  #stage{position:absolute;inset:0;overflow:hidden}
   #board{position:absolute;inset:0;width:100%;height:100%;display:block}
   .wedge{fill:rgba(255,255,255,.018);stroke:#2c3250;stroke-width:1.5;transition:fill .3s}
   .wedge.alt{fill:rgba(255,255,255,.045)}
@@ -108,7 +128,7 @@
   .trail.on{opacity:1}
 
   /* headline over board */
-  #headline{position:absolute;left:0;right:0;top:16px;z-index:3;text-align:center;pointer-events:none;opacity:0;transition:opacity .5s}
+  #headline{position:absolute;left:200px;right:200px;top:16px;z-index:3;text-align:center;pointer-events:none;opacity:0;transition:opacity .5s}
   body.running #headline{opacity:1}
   #headline .big{font-size:22px;font-weight:800;letter-spacing:-.3px}
   #headline .big em{font-style:normal;background:linear-gradient(90deg,var(--sun),#ff9f6b);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -190,23 +210,28 @@
   @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .empty{color:var(--dim);font-size:13px;padding:10px 4px}
 
+  #board,#headline{transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+  @media (min-width:961px){
+    body.show-right #board,body.show-right #headline{transform:translateX(-195px)}
+    body.show-left #board,body.show-left #headline{transform:translateX(180px)}
+    body.show-left #openLeft,body.show-right #openRight,body.show-left #howto{opacity:0;pointer-events:none}
+  }
   /* ---------- responsive ---------- */
-  @media (max-width:1180px){ main{grid-template-columns:260px 1fr 330px} }
   @media (max-width:960px){
     body{overflow:auto}
-    main{display:flex;flex-direction:column;height:auto}
-    #stage{order:1;height:min(100vw,620px);min-height:420px}
-    #right{order:2;border-left:none;border-top:1px solid var(--line)}
-    #left{order:3;border-right:none;border-top:1px solid var(--line)}
-    aside{overflow:visible;padding:16px}
-    body.landing #stage{height:calc(100vh - 60px)}
-    body.landing aside{display:none}
+    main{height:auto;overflow:visible}
+    #stage{position:relative;height:calc(100vh - 60px)}
+    aside,#right{position:fixed;top:60px;width:100%}
+    #headline{left:0;right:0}
+    .corner{top:auto;bottom:56px}
     header{padding:10px 16px}
     .brand small{display:none}
     #howto{display:none}
     #ticker{max-width:calc(100% - 32px);right:16px;left:16px}
     #headline .big{font-size:17px}
     body.running #stage{height:auto;min-height:0;display:flex;flex-direction:column}
+    body.running .corner{position:relative;top:auto;bottom:auto;left:auto;right:auto;align-self:center;margin:6px 0 0}
+    body.running #openLeft{order:-1}
     body.running #headline{position:relative;top:0;padding:14px 12px 0;order:-1}
     body.running #board{position:relative;height:min(100vw,560px)}
     body.running #ticker{position:relative;left:auto;right:auto;bottom:auto;margin:0 16px 12px;align-self:center}
@@ -247,6 +272,7 @@
 
 <main>
   <aside id="left">
+    <button class="xbtn" data-close="left" aria-label="Close">×</button>
     <h3>Your idea, stripped to its core</h3>
     <div class="card core sun" id="core">…</div>
     <h3>The same concept, any industry</h3>
@@ -280,28 +306,25 @@
       <div class="big" id="headtxt">Searching the multiverse…</div>
       <div id="filters"></div>
     </div>
-    <div id="howto"><b>Closer to the bullseye = closer to your idea.</b> Each ring is one more choice they made differently; the slice shows the main one. Purple band: other industries, same core concept.</div>
+    <button class="corner" id="openLeft" type="button">◎ Your idea, decoded</button>
+    <button class="corner" id="openRight" type="button">☰ Ranked list</button>
+    <div id="howto"><b>Closer to the centre = closer to your idea.</b> Each ring out is one more choice done differently; the slice shows which. The purple band is other industries.</div>
     <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
     <div id="tip"></div>
 
     <div id="hero">
       <div class="eyebrow">Live-web founder research</div>
       <h1>Your idea already exists.<br><em>Elsewhere.</em></h1>
-      <p>Describe what you're building. We find every real company that tried a version of it, show how close each one is to you, and which are still alive today, with a receipt for every claim.</p>
+      <p>Somewhere, someone has already solved a version of your problem, often in an industry you'd never think to search. Describe your idea and we'll find them.</p>
       <form class="bigsearch" id="heroForm">
         <input id="idea" aria-label="Describe your idea" placeholder="e.g. an SMS assistant that helps NYC deli owners track daily cash flow" autofocus>
         <button class="btn primary" type="submit">Find my multiverse →</button>
       </form>
       <div class="examples" id="examples"></div>
-      <div class="threeup">
-        <span><b>◎ Bullseye</b> = your idea</span>
-        <span><b>Each ring out</b> = one more thing done differently</span>
-        <span><b style="color:var(--insp)">Purple band</b> = other industries</span>
-      </div>
     </div>
   </section>
 
-  <aside id="right"><div id="detail"></div></aside>
+  <aside id="right"><button class="xbtn" data-close="right" aria-label="Close">×</button><div id="detail"></div></aside>
 </main>
 
 <script type="module">
@@ -406,7 +429,8 @@ function relax(){
 /* ---------- events ---------- */
 function reset(){
   if (cancel) cancel();
-  S = {core:null, u:{}, order:[], slot:{}, bandCount:0, selected:null, filter:"all", done:false, stage:""};
+  S = {core:null, u:{}, order:[], slot:{}, bandCount:0, selected:null, listOpen:false, filter:"all", done:false, stage:""};
+  document.body.classList.remove("show-left", "show-right");
   $("darts").innerHTML = ""; $("trails").innerHTML = "";
   $("core").textContent = "…"; $("mech").textContent = "…"; $("choices").innerHTML = ""; $("queries").innerHTML = ""; $("qsum").textContent = "0 live searches";
   drawBoard(null); renderHeadline(); renderRight();
@@ -475,9 +499,9 @@ const FILTERS = [
 ];
 function renderHeadline(){
   const list = Object.values(S.u); const n = list.length;
-  const twins = list.filter(FILTERS[1][2]).length;
+  const twins = list.filter(FILTERS[1][2]).length, ins = list.filter(FILTERS[4][2]).length;
   $("headtxt").innerHTML = !n ? (S.core ? "Searching the multiverse…" : "Reading your idea…")
-    : `Your idea exists in <em>${n} other universe${n === 1 ? "" : "s"}</em>${twins ? `, ${twins} almost identical to yours` : ""}.`;
+    : `Your idea exists in <em>${n} other universe${n === 1 ? "" : "s"}</em>.${ins ? ` ${ins} ${ins === 1 ? "is" : "are"} in industries you'd never search.` : twins ? ` ${twins} almost identical to yours.` : ""}`;
   $("filters").innerHTML = !n ? "" : FILTERS.map(([id, label, fn, color]) => {
     const c = list.filter(fn).length; if (id !== "all" && !c) return "";
     return `<button class="pill ${S.filter === id ? "on" : ""}" data-f="${id}">${color ? `<i class="dot" style="background:${color}"></i>` : ""}${label} <b>${c}</b></button>`;
@@ -548,50 +572,61 @@ function select(id){
   Object.values(S.u).forEach(x => x.g.classList.toggle("sel", x.id === id));
   $("trails").querySelectorAll(".keep").forEach(t => t.remove());
   el("line", {x1:C, y1:C, x2:u.x, y2:u.y, class:"trail on keep"}, $("trails"));
-  S.selected = id; renderDetail(u);
+  S.selected = id; renderDetail(u); document.body.classList.add("show-right"); $("right").scrollTop = 0;
 }
 function deselect(){
   S.selected = null; Object.values(S.u).forEach(x => x.g.classList.remove("sel"));
   $("trails").querySelectorAll(".keep").forEach(t => t.remove()); renderRight();
+  if (!S.listOpen) document.body.classList.remove("show-right");
+}
+function openList(){ S.listOpen = true; deselect(); document.body.classList.add("show-right"); document.body.classList.remove("show-left"); }
+function closeDrawer(which){
+  if (which === "left") return document.body.classList.remove("show-left");
+  S.listOpen = false; deselect();
 }
 function renderDetail(u){
   const yours = S.core ? S.core.user_execution : {};
   const sim = similarity(u); const st = STATUS[u.status];
-  const rel = u.kind === "inspiration" ? `Inspiration · ${u.industry}` : u.relationship === "competitor" ? "Direct competitor" : "Possible partner";
+  const rel = u.kind === "inspiration" ? `Other industry · ${u.industry}` : u.relationship === "competitor" ? "Direct competitor" : "Possible partner";
+  const take = u.kind === "inspiration" && u.transfer ? ["What you could borrow", u.transfer] : ["The lesson for you", u.lesson];
+  const nDiff = (u.divergent_axes || []).length;
+  const receipt = u.receipt_url || u.source_url;
   $("detail").innerHTML = `<div class="fadein">
-    <button class="back" id="back">← All results</button>
+    <button class="back" id="back">← Ranked list</button>
     <div class="card">
       <div class="dhead">${sim != null ? gauge(sim, "var(--sun)") : gauge(100, "var(--insp)").replace(">100%<", ">≈<")}
         <div><div class="name">${esc(u.name)}</div><div class="sub">${esc(u.one_liner)}</div></div></div>
       <div class="tags">
         <span class="tag" style="color:${colorOf(u)};border-color:${colorOf(u)}">${esc(rel)}</span>
         <span class="tag">${st ? `<span style="color:${st[1]}">● ${st[0]}</span>` : "Checking if alive…"}</span>
-        <span class="tag">found via ${esc(u.lens_label)}</span>
       </div>
-      ${u.website ? `<div style="margin-top:10px;font-size:12px"><a href="${esc(u.website)}" target="_blank" rel="noopener">${esc(u.website)}</a></div>` : ""}
     </div>
-    ${u.kind === "inspiration" && u.transfer ? `<div class="card" style="border-color:#3a2d60"><h3>What you could borrow</h3><div style="font-weight:500">${esc(u.transfer)}</div></div>` : ""}
-    <div class="card"><h3>Where their universe split from yours</h3>
-      <div style="margin-bottom:10px;font-weight:500">${esc(u.divergence_summary)}</div>
+    <div class="card" style="${u.kind === "inspiration" ? "border-color:#3a2d60" : ""}"><div class="takeaway"><small>${take[0]}</small>${esc(take[1])}</div></div>
+
+    <details class="sec" open><summary>Where they split from you<span class="hint">${nDiff} of 5 choices differ</span></summary><div>
+      <div style="margin-bottom:10px">${esc(u.divergence_summary)}</div>
       <table class="cmp"><tr><td></td><td style="color:var(--dim)">You</td><td style="color:var(--dim)">Them</td></tr>
       ${AXES.map(a => { const d = (u.divergent_axes || []).includes(a);
         return `<tr class="${d ? "diff" : "same"}"><td>${AXIS_NAME[a]}</td><td>${esc(yours[a])}</td><td>${esc(u.execution?.[a])}</td></tr>`; }).join("")}
-      </table></div>
-    <div class="card"><h3>Alive today?</h3>
-      ${u.status ? `<div class="status" style="color:${st[1]}">● ${st[0]}</div>
-        <div style="margin-top:6px">${esc(u.signal || "No clear signal in the past year.")}</div>
+      </table>
+      ${u.relationship_reason ? `<div class="sub" style="margin-top:10px;font-size:12.5px">${esc(u.relationship_reason)}</div>` : ""}</div></details>
+
+    <details class="sec"><summary>Alive today?<span class="hint">${st ? `<span style="color:${st[1]}">${st[0]}</span>` : "checking…"}</span></summary><div>
+      ${u.status ? `<div>${esc(u.signal || "No clear signal in the past year.")}</div>
         ${u.signal_url ? `<div style="font-size:12px;margin-top:6px;color:var(--dim)">${esc(u.signal_date || "")} · <a href="${esc(u.signal_url)}" target="_blank" rel="noopener">source</a></div>` : ""}
         ${u.conflict ? `<div class="conflict">⚠ Sources disagree: ${esc(u.conflict)}</div>` : ""}
         ${u.status === "shut_down" ? `<button class="btn" id="dive" style="margin-top:12px;width:100%">Why did this universe die? →</button><div id="diveout"></div>` : ""}`
         : `<div class="sub" style="display:flex;gap:8px;align-items:center"><div class="spinner"></div>Checking live news…</div>`}
-    </div>
-    <div class="card"><h3>Receipt · <span class="v-${u.verification}">quote ${esc(u.verification)}</span></h3>
+    </div></details>
+
+    <details class="sec"><summary>Receipt<span class="hint v-${esc(u.verification)}">quote ${esc(u.verification)}</span></summary><div>
       <blockquote>“${esc(u.evidence_quote)}”</blockquote>
-      <div style="margin-top:8px;font-size:12px"><a href="${esc(u.source_url)}" target="_blank" rel="noopener">${esc(u.source_title || u.source_url)}</a></div></div>
-    <div class="card"><h3>The lesson for you</h3><div style="font-weight:500">${esc(u.lesson)}</div>
-      ${u.relationship_reason ? `<div class="sub" style="margin-top:8px;font-size:12.5px">${esc(u.relationship_reason)}</div>` : ""}</div>
+      ${u.name_on_page === false ? `<div class="conflict">⚠ The company name wasn't found on this page.</div>` : ""}
+      <div style="margin-top:8px;font-size:12px"><a href="${esc(receipt)}" target="_blank" rel="noopener">${esc(u.source_title || u.source_url)}</a></div>
+      <div class="sub" style="font-size:12px;margin-top:4px">Found via ${esc(u.lens_label)}${u.website ? ` · <a href="${esc(u.website)}" target="_blank" rel="noopener">website</a>` : ""}</div>
+    </div></details>
   </div>`;
-  $("back").onclick = deselect;
+  $("back").onclick = openList;
   const dive = $("dive");
   if (dive) dive.onclick = async () => {
     dive.disabled = true; dive.textContent = "Researching…";
@@ -622,7 +657,10 @@ $("topForm").onsubmit = e => { e.preventDefault(); submit($("ideaTop").value); }
 $("examples").innerHTML = EXAMPLES.map(x => `<button type="button">${esc(x)}</button>`).join("");
 $("examples").querySelectorAll("button").forEach(b => b.onclick = () => { $("idea").value = b.textContent; submit(b.textContent); });
 $("demos").onchange = e => { const o = e.target.selectedOptions[0]; if (!o.value) return; start("replay", o.value, o.dataset.idea); e.target.value = ""; };
-document.addEventListener("keydown", e => { if (e.key === "Escape" && S?.selected) deselect(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape"){ closeDrawer("left"); closeDrawer("right"); } });
+$("openLeft").onclick = () => { document.body.classList.toggle("show-left"); };
+$("openRight").onclick = () => { document.body.classList.contains("show-right") && !S.selected ? closeDrawer("right") : openList(); };
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeDrawer(b.dataset.close));
 async function loadDemos(){
   try { const list = await API.listDemos();
     $("demos").innerHTML = '<option value="">Replay a run…</option>' + list.map(d => `<option value="${esc(d.file)}" data-idea="${esc(d.idea)}">${esc(d.idea.slice(0,60))}</option>`).join("");
