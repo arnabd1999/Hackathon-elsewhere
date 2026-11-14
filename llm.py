@@ -16,8 +16,8 @@ _CITATION = re.compile(r"\s*\[\[\s*\d+(?:\s*,\s*\d+)*\s*\]\]|\s*\[\d+(?:\s*,\s*\
 
 
 async def _you_research_text(client: httpx.AsyncClient, system: str, user: str,
-                             domains: list[str] | None = None) -> str:
-    """Runs one prompt through the You.com Research API and returns its text answer.
+                             domains: list[str] | None = None) -> tuple[str, list[dict]]:
+    """Runs one prompt through the You.com Research API; returns (text answer, pages it read).
 
     Research searches the web on its own; `domains` keeps it on the sites we already read,
     so the facts (and quotes) it uses come from the same pages as our receipts."""
@@ -43,10 +43,15 @@ async def _you_research_text(client: httpx.AsyncClient, system: str, user: str,
     )
     if r.status_code >= 400:
         raise RuntimeError(f"You.com research (as LLM) {r.status_code}: {r.text[:300]}")
-    content = (r.json().get("output") or {}).get("content")
+    output = r.json().get("output") or {}
+    content = output.get("content")
+    sources = [
+        {"url": src.get("url"), "title": src.get("title") or "", "snippets": [x for x in src.get("snippets") or [] if isinstance(x, str)]}
+        for src in output.get("sources") or [] if isinstance(src, dict) and src.get("url")
+    ]
     if isinstance(content, (dict, list)):
-        return json.dumps(content)
-    return _CITATION.sub("", str(content or ""))
+        return json.dumps(content), sources
+    return _CITATION.sub("", str(content or "")), sources
 
 
 def _parse_json(text: str):
@@ -63,8 +68,12 @@ def _parse_json(text: str):
 
 async def complete_json(client: httpx.AsyncClient, system: str, user: str, max_tokens: int = 2000,
                         domains: list[str] | None = None):
-    """`domains` only matters for LLM_PROVIDER=you (see _you_research_text); others ignore it."""
+    """`domains` only matters for LLM_PROVIDER=you (see _you_research_text); others ignore it.
+
+    With LLM_PROVIDER=you, a dict result also carries "_sources": the pages Research actually read
+    ({url, title, snippets}), so callers can credit facts to the page they really came from."""
     provider = os.getenv("LLM_PROVIDER", "openai").lower()
+    sources = None
     if provider == "anthropic":
         r = await client.post(
             "https://api.anthropic.com/v1/messages",
@@ -85,7 +94,7 @@ async def complete_json(client: httpx.AsyncClient, system: str, user: str, max_t
             raise RuntimeError(f"Anthropic {r.status_code}: {r.text[:300]}")
         text = "".join(b.get("text", "") for b in r.json()["content"])
     elif provider == "you":
-        text = await _you_research_text(client, system, user, domains)
+        text, sources = await _you_research_text(client, system, user, domains)
     else:
         base = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
         r = await client.post(
@@ -104,4 +113,7 @@ async def complete_json(client: httpx.AsyncClient, system: str, user: str, max_t
         if r.status_code >= 400:
             raise RuntimeError(f"OpenAI {r.status_code}: {r.text[:300]}")
         text = r.json()["choices"][0]["message"]["content"]
-    return _parse_json(text)
+    out = _parse_json(text)
+    if sources is not None and isinstance(out, dict):
+        out["_sources"] = sources
+    return out

@@ -38,7 +38,7 @@ async def search(client: httpx.AsyncClient, query: str, count: int = 8, freshnes
     return (results.get("web") or []) + (results.get("news") or [])
 
 
-async def contents(client: httpx.AsyncClient, urls: list[str]):
+async def contents(client: httpx.AsyncClient, urls: list[str], crawl_timeout: int = 15):
     """Returns a list of {url, title, markdown}. Failed crawls have markdown=None."""
     out = []
     for i in range(0, len(urls), 10):
@@ -46,7 +46,7 @@ async def contents(client: httpx.AsyncClient, urls: list[str]):
         r = await client.post(
             CONTENTS_URL,
             headers=_headers(),
-            json={"urls": batch, "formats": ["markdown"], "crawl_timeout": 15},
+            json={"urls": batch, "formats": ["markdown"], "crawl_timeout": crawl_timeout},
             timeout=90,
         )
         _check(r, "contents")

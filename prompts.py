@@ -12,6 +12,7 @@ Two kinds of matches exist:
 
 Return JSON:
 {
+  "founder_industry": "the founder's own industry, 1-3 words (e.g. 'food retail')",
   "core_idea": "one sentence stating the underlying idea with every execution choice removed",
   "core_mechanism": "the abstract concept underneath, with the industry removed, e.g. 'match perishable supply to last-minute demand'",
   "user_execution": {"customer": "...", "geography": "...", "business_model": "...",
@@ -23,7 +24,8 @@ Return JSON:
 
 Rules: user_execution uses short phrases, "unspecified" when the founder didn't say.
 parallel_queries: each finds company/product pages pursuing the core idea under a DIFFERENT
-execution than the founder's; vary one axis per query; phrase like a product search
+execution than the founder's, but INSIDE the founder's industry (other industries belong in
+cross_domain); vary one axis per query; phrase like a product search
 ("startup that ...", "app that ... for farmers in Kenya").
 cross_domain: pick industries that are surprising but genuinely share the mechanism (e.g. airline
 seat pricing for a restaurant-waste idea); the query must find COMPANIES in that industry doing it.
@@ -53,6 +55,13 @@ Return JSON: {"companies": [ ... up to 3 ... ]}. Each company:
 Rules:
 - Only include companies that genuinely pursue the core idea, or genuinely apply the core mechanism elsewhere.
   Merely same-category companies do not count. If none qualify, return {"companies": []}.
+- kind: "parallel" ONLY when the company is in the founder's industry (given below) and serves the same need.
+  Any company in a different industry is "inspiration", even if it was found by a same-industry search.
+- "name" must be a specific company or product brand as written on the page, never a category
+  ("Hotels", "Car rental operators") or a description.
+- Only companies or products. Skip governments, regional bodies, NGOs' programs, and generic tools
+  (ad networks, CRMs, cloud providers) unless the core mechanism is their actual product.
+- For "inspiration", "transfer" must name a concrete practice the founder could copy; if you can't, skip it.
 - For a post-mortem page about a dead startup, include that startup; for a Reddit thread, include tools people say they use.
 - evidence_quote MUST be verbatim from the page. It will be string-matched against the page; invented quotes are discarded.
 - Write "unknown" for an execution axis the page doesn't support. Don't guess.
@@ -82,6 +91,7 @@ def decompose_user(idea: str) -> str:
 def extract_user(core: dict, page: dict) -> str:
     text = (page.get("markdown") or "")[:10000]
     return (
+        f"Founder's industry: {core.get('founder_industry') or 'unspecified'}\n"
         f"Core idea: {core['core_idea']}\n"
         f"Core mechanism: {core.get('core_mechanism', '')}\n"
         f"Found via: {page.get('lens', 'web')}\n"

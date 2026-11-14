@@ -25,6 +25,8 @@ from verify import check_receipt, name_on_page, verify_quote
 
 MAX_PAGES = int(os.getenv("MAX_PAGES", "18"))
 LLM_CONCURRENCY = int(os.getenv("LLM_CONCURRENCY", "6"))
+READ_BATCH = int(os.getenv("READ_BATCH", "3"))  # URLs per Contents call; batches run in parallel
+CRAWL_TIMEOUT = int(os.getenv("CRAWL_TIMEOUT", "8"))  # seconds You.com waits for one page
 SKIP_DOMAINS = ("youtube.com", "facebook.com", "instagram.com", "x.com", "twitter.com",
                 "linkedin.com", "pinterest.com", "tiktok.com", "wikipedia.org")
 # Aggregator sources: allow a couple of pages each (the companies live inside them).
@@ -88,14 +90,32 @@ def repair_quote(c: dict, markdown: str) -> str | None:
     and best matches what the model said about it. Returns None when no sentence names it."""
     name = c.get("name") or ""
     claim = set(_WORD.findall(f"{c.get('evidence_quote', '')} {c.get('one_liner', '')}".lower())) - _STOP
-    best, best_score = None, 0
+    claim -= set(_WORD.findall(name.lower()))  # the name alone doesn't make a sentence relevant
+    best, best_score = None, 1  # need 2+ shared content words, so boilerplate ("leave a review") loses
     for s in _page_sentences(markdown):
         if not name_on_page(name, s):
             continue
-        score = len(claim & set(_WORD.findall(s.lower()))) + 0.5  # naming the company is the floor
+        score = len(claim & set(_WORD.findall(s.lower())))
         if score > best_score:
             best, best_score = s, score
     return best
+
+
+def resource_page(page: dict, c: dict, sources: list[dict]) -> dict:
+    """The page to credit company `c` to.
+
+    Research (LLM_PROVIDER=you) sometimes names a company it read about on another page. If the
+    company isn't on our page but is named in a page Research read, credit that page instead,
+    using the text You.com returned for it, so the receipt points where the fact really is."""
+    name = c.get("name") or ""
+    if not sources or name_on_page(name, page.get("markdown") or ""):
+        return page
+    for src in sources:
+        text = "\n".join(src.get("snippets") or [])
+        if src.get("url") and name_on_page(name, f"{src.get('title', '')}\n{text}"):
+            return {"url": src["url"], "title": src.get("title", ""), "markdown": text,
+                    "lens": page.get("lens", "parallel"), "lens_label": page.get("lens_label", "Web")}
+    return page
 
 
 def _build_universe(page: dict, c: dict, core: dict) -> dict:
@@ -128,7 +148,8 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
         "divergence_summary": c.get("divergence_summary", ""),
         "lesson": c.get("lesson", ""),
         "relationship": c.get("relationship", "collaborator"),
-        "kind": "inspiration" if c.get("kind") == "inspiration" else "parallel",
+        # Pages found by an other-industry search are inspirations by construction.
+        "kind": "inspiration" if c.get("kind") == "inspiration" or page.get("lens") == "cross" else "parallel",
         "industry": c.get("industry", ""),
         "transfer": c.get("transfer", ""),
         "lens": page.get("lens", "parallel"),
@@ -177,7 +198,14 @@ async def explore(idea: str):
 
         # 3. Read the pages
         yield stage(f"Reading {len(urls)} source pages…")
-        pages = [p for p in await you.contents(client, urls) if p.get("markdown")]
+        # Small batches in parallel: one slow site no longer holds up every other page.
+        batches = [urls[i:i + READ_BATCH] for i in range(0, len(urls), READ_BATCH)]
+        read = await asyncio.gather(*[you.contents(client, b, crawl_timeout=CRAWL_TIMEOUT) for b in batches],
+                                    return_exceptions=True)
+        pages = [p for r in read if isinstance(r, list) for p in r if p.get("markdown")]
+        pages = [p for p in pages if p.get("url")]
+        if not pages and any(isinstance(r, Exception) for r in read):
+            raise RuntimeError(f"Reading pages failed: {next(r for r in read if isinstance(r, Exception))}")
         for pg in pages:
             q = lens_of.get(pg.get("url")) or {}
             pg["lens"], pg["lens_label"] = q.get("lens", "parallel"), q.get("label", "Web")
@@ -195,7 +223,7 @@ async def explore(idea: str):
                     out = {"companies": []}
             for c in (out.get("companies") or [])[:3]:
                 if c.get("name"):
-                    await queue.put((page, c))
+                    await queue.put((resource_page(page, c, out.get("_sources") or []), c))
 
         async def close_when_done():
             await asyncio.gather(*[work(p) for p in pages])

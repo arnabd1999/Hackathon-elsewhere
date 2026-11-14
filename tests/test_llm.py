@@ -20,13 +20,15 @@ def test_you_provider_uses_research_and_parses_json(monkeypatch):
         seen["url"] = str(request.url)
         seen["key"] = request.headers.get("X-API-Key")
         seen["body"] = json.loads(request.content)
-        return httpx.Response(200, json={"output": {"content": 'Sure: {"ok": true [[1]]}', "content_type": "text"}})
+        return httpx.Response(200, json={"output": {
+            "content": 'Sure: {"ok": true [[1]]}', "content_type": "text",
+            "sources": [{"url": "https://a.example", "title": "A", "snippets": ["s1"]}, {"title": "no url"}]}})
 
     async def run():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
             return await llm.complete_json(c, "system text", "user text")
 
-    assert asyncio.run(run()) == {"ok": True}
+    assert asyncio.run(run()) == {"ok": True, "_sources": [{"url": "https://a.example", "title": "A", "snippets": ["s1"]}]}
     assert seen["url"].endswith("/v1/research")
     assert seen["key"] == "test-key"
     assert seen["body"]["research_effort"] == "lite"
