@@ -40,8 +40,9 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(encodeEvent(event)));
         }
         controller.close();
-      } catch {
-        // client aborted mid-stream; nothing to do
+      } catch (err) {
+        // aborts stay silent; real failures surface to the client
+        if (!cancelled) controller.error(err);
       }
     },
     cancel() {
