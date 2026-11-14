@@ -1,5 +1,6 @@
 # Elsewhere: the multiverse of your idea
 
+
 **One line:** Your problem isn't as new as you think. It's been solved elsewhere. Describe your idea, and Elsewhere finds the real companies that already solved a version of it, both in your industry (done differently) and in completely different industries (same core concept). It checks whether each is alive *today* and shows a receipt for every claim.
 
 **Who it's for:** founders in the ideation phase who get stuck searching only their own industry. Elsewhere surfaces inspirations (borrow their playbook), collaborators (non-overlapping markets) and lessons (the versions that died).
