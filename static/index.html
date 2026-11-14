@@ -470,7 +470,7 @@
     <button class="corner" id="openRight" type="button">☰ List</button>
     <button id="seeall" type="button">⤢ See all</button>
     <div id="tour" role="group" aria-label="Top matches"></div>
-    <div id="legend"><span><i class="dot" style="background:conic-gradient(#ffcf4a,#5fe3b3,#b48cff,#ff8fd0,#ffcf4a)"></i>Other industries</span><span><i class="dot" style="background:var(--collab)"></i>Partner</span><span><i class="dot" style="background:var(--comp)"></i>Competitor</span><span class="note">Bigger = more relevant</span></div>
+    <div id="legend"><span><i class="dot" style="background:conic-gradient(#ffcf4a,#5fe3b3,#b48cff,#ff8fd0,#ffcf4a)"></i>Other industries</span><span><i class="dot" style="background:var(--collab)"></i>Partner</span><span><i class="dot" style="background:var(--comp)"></i>Competitor</span><span class="note">Bigger = more relevant</span><span class="note">Use arrow keys to explore</span></div>
     <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
     <div id="tip"></div>
 
@@ -587,6 +587,26 @@ function drawClusters(){
     t.textContent = key.length > 28 ? key.slice(0, 27) + "…" : key;
     const n = S.indCount[key]; if (n > 1){ const s = el("tspan", {}, t); s.textContent = ` · ${n}`; }
   }
+  fitClusters();
+}
+// keep industry labels readable when the camera or an open drawer would cut them off: slide a half-hidden label back inside.
+// Pure geometry against the board's final position (CSS slides it when a drawer opens), so it never depends on mid-animation layout.
+function fitClusters(){
+  const board = $("board"), W = board.clientWidth, H = board.clientHeight; if (!W || !H) return;
+  const wide = innerWidth > 960, cl = document.body.classList, R0 = W;
+  const tx = wide && cl.contains("show-right") ? -195 : wide && cl.contains("show-left") ? 180 : 0;
+  const L = (wide && cl.contains("show-left") ? $("left").offsetWidth : 0) + 12;
+  const R = R0 - (wide && cl.contains("show-right") ? $("right").offsetWidth : 0) - 12;
+  const upp = Math.max(vb[2] / W, vb[3] / H), ox = (W - vb[2] / upp) / 2 + tx;
+  const sx = X => ox + (X - vb[0]) / upp;   // svg x -> px within the stage
+  document.querySelectorAll("#clusters .cluster").forEach(t => {
+    let b; try { b = t.getBBox(); } catch { return; }
+    const left = sx(b.x), right = sx(b.x + b.width);
+    let shift = 0;
+    if (right > R && left < R) shift = Math.max(R - right, L - left);
+    else if (left < L && right > L) shift = Math.min(L - left, R - right);
+    t.style.translate = shift ? `${(shift * upp).toFixed(1)}px 0` : "";   // CSS translate: the fade-in animation owns `transform`
+  });
 }
 
 /* ---------- camera: glide the board's viewBox toward a planet ---------- */
@@ -600,7 +620,9 @@ function flyTo(target, ms = 1000){
     if (k < 1) vbRaf = requestAnimationFrame(step); };
   vbRaf = requestAnimationFrame(step);
 }
-function setVB(b){ vb = b; $("board").setAttribute("viewBox", vb.join(" ")); document.body.classList.toggle("zoomed", vb[2] < VB0[2] * .85); }
+function setVB(b){ vb = b; $("board").setAttribute("viewBox", vb.join(" ")); document.body.classList.toggle("zoomed", vb[2] < VB0[2] * .85); fitClusters(); }
+new MutationObserver(() => fitClusters()).observe(document.body, {attributes:true, attributeFilter:["class"]});   // drawers open/close
+window.addEventListener("resize", () => fitClusters());
 function zoomOut(){ if (S.tour) endTour(false); if (S.selected || document.body.classList.contains("show-right")) closeDrawer("right"); flyTo(VB0, 800); }
 // scroll to zoom around the cursor
 $("board").addEventListener("wheel", e => {
@@ -1146,8 +1168,31 @@ async function wireExamples(){
   });
 }
 wireExamples();
-$("demos").onchange = e => { const o = e.target.selectedOptions[0]; if (!o.value) return; start("replay", o.value, o.dataset.idea); e.target.value = ""; };
+$("demos").onchange = e => { const o = e.target.selectedOptions[0]; if (!o.value) return; start("replay", o.value, o.dataset.idea); e.target.value = ""; e.target.blur(); /* hand arrow keys to the board */ };
 document.addEventListener("keydown", e => { if (e.key === "Escape"){ closeDrawer("left"); closeDrawer("right"); } });
+// arrow keys on the board: Up/Down = next company closer to / further from YOU, Left/Right = previous/next around the circle
+document.addEventListener("keydown", e => {
+  if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (!S || S.view !== "elsewhere" || !document.body.classList.contains("running")) return;
+  const a = document.activeElement;
+  if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return;
+  const list = Object.values(S.u).filter(u => u.g && Number.isFinite(u.x)); if (!list.length) return;
+  e.preventDefault(); S.touched = true; pauseTour(); $("tip").classList.remove("on");
+  const cur = S.u[S.selected];
+  if (!cur){ const id = topMatches(1)[0] || list[0].id; return select(id); }
+  const dist = u => Math.hypot(u.x - C, u.y - C), ang = u => Math.atan2(u.y - C, u.x - C);
+  let next;
+  if (e.key === "ArrowUp" || e.key === "ArrowDown"){
+    // the nearest company one step inward (Up) or outward (Down), preferring one in the same direction from YOU
+    const d0 = dist(cur), up = e.key === "ArrowUp", turn = u => Math.abs(((ang(u) - ang(cur)) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI);
+    next = list.filter(u => u !== cur && (up ? dist(u) < d0 - 15 : dist(u) > d0 + 15))
+      .sort((p, q) => (Math.abs(dist(p) - d0) + turn(p) * 90) - (Math.abs(dist(q) - d0) + turn(q) * 90))[0];
+  } else {
+    const by = list.slice().sort((p, q) => ang(p) - ang(q) || dist(p) - dist(q)), i = by.indexOf(cur);
+    next = by[(i + (e.key === "ArrowRight" ? 1 : -1) + by.length) % by.length];
+  }
+  if (next && next !== cur) select(next.id);
+});
 $("seeall").onclick = () => { S.touched = true; zoomOut(); };
 $("openLeft").onclick =() => { document.body.classList.toggle("show-left"); };
 $("openRight").onclick = () => { document.body.classList.contains("show-right") && !S.selected ? closeDrawer("right") : openList(); };
