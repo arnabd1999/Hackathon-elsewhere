@@ -161,6 +161,11 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
             c = {**c, "evidence_quote": fixed}
             quote_repaired = True
     receipt = check_receipt(c.get("evidence_quote", ""), md, c["name"], page.get("url"))
+    verification = receipt["verification"]
+    if quote_repaired and verification == "verified":
+        # The sentence is really on the page, but it's ours, not the model's evidence: don't count it
+        # as a verified receipt (keeps the pitched verified % honest).
+        verification = "partial"
     return {
         "id": hashlib.md5(_key(c["name"]).encode()).hexdigest()[:10],
         "name": c["name"],
@@ -169,8 +174,9 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
         "source_url": page.get("url"),
         "source_title": page.get("title", ""),
         "evidence_quote": c.get("evidence_quote", ""),
-        "verification": receipt["verification"],
-        # True when the model's quote wasn't on the page and we used the page's own sentence instead.
+        "verification": verification,
+        # True when the model's quote wasn't on the page and we used the page's own sentence instead
+        # (such receipts are reported as "partial", never "verified").
         "quote_repaired": quote_repaired,
         "name_on_page": receipt["name_on_page"],
         "receipt_url": receipt["receipt_url"],

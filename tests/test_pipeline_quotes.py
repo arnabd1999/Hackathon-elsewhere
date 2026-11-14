@@ -30,7 +30,7 @@ def test_repair_returns_none_when_company_not_on_page():
 def test_build_universe_repairs_invented_quote_and_marks_it():
     page = {"url": "https://tgtg.example/about", "markdown": PAGE}
     u = _build_universe(page, _company(evidence_quote="An invented sentence that never appears on this page at all."), CORE)
-    assert u["verification"] == "verified"
+    assert u["verification"] == "partial"  # a swapped-in sentence is never counted as verified
     assert u["quote_repaired"] is True
     assert u["evidence_quote"].startswith("Too Good To Go connects people")
 
@@ -62,7 +62,8 @@ def test_off_page_company_is_credited_to_the_research_page_that_names_it():
     p = resource_page(page, c, sources)
     assert p["url"] == "https://autoslash.example" and p["lens"] == "cross"
     u = _build_universe(p, c, CORE)
-    assert u["verification"] == "verified" and u["source_url"] == "https://autoslash.example"
+    assert u["source_url"] == "https://autoslash.example"
+    assert u["quote_repaired"] is True and u["verification"] == "partial"
 
 
 def test_company_on_our_page_keeps_our_page():
