@@ -41,8 +41,9 @@ class CheckStatus(unittest.TestCase):
         async def search(client, q, count=8, freshness=None):
             return results
 
-        async def cj(client, system, user, max_tokens=2000):
+        async def cj(client, system, user, max_tokens=2000, domains=None):
             self.seen["user"] = user
+            self.seen["domains"] = domains
             return llm_out
 
         status.you.search, status.llm.complete_json = search, cj
@@ -78,6 +79,13 @@ class CheckStatus(unittest.TestCase):
         u = self.seen["user"]
         self.assertLess(u.index("/new"), u.index("/old"))
         self.assertLess(u.index("/old"), u.index("/none"))
+
+    def test_research_kept_on_result_domains(self):
+        res = [R("https://www.news.example/a", "Acme Foods raises", age="2026-01-01"),
+               R("https://blog.other.example/b", "Acme Foods launches", age="2025-01-01"),
+               R("https://news.example/c", "Acme Foods hires", age="2024-01-01")]
+        self._run(res, {"status": "active", "signal_url": "https://news.example/c"})
+        self.assertEqual(self.seen["domains"], ["news.example", "blog.other.example"])
 
 
 if __name__ == "__main__":

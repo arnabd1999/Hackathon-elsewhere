@@ -41,7 +41,9 @@ async def check_status(client, sem, u: dict) -> dict:
               "description": r.get("description")} for r in res]
     async with sem:
         try:
-            out = await llm.complete_json(client, prompts.STATUS, prompts.status_user(u["name"], u["one_liner"], items))
+            domains = list(dict.fromkeys(_domain(i["url"]) for i in items if i.get("url")))
+            out = await llm.complete_json(client, prompts.STATUS, prompts.status_user(u["name"], u["one_liner"], items),
+                                          domains=domains)
         except Exception:  # noqa: BLE001
             return {**base, "status": "unknown", "signal": ""}
     by_url = {i["url"]: i for i in items}
