@@ -112,6 +112,70 @@ def demos():
     return out
 
 
+SHOWCASE_MAX = 8
+_showcase_cache: dict = {"key": None, "items": []}
+
+
+def _build_showcase(paths) -> list[dict]:
+    """Verified universes from all recordings: deduped by name, round-robin across industries."""
+    candidates = []
+    for p in paths:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            idea = str(data.get("idea") or "")
+            evs = [e.get("ev") or {} for e in data.get("events") or [] if isinstance(e, dict)]
+        except Exception:  # noqa: BLE001
+            continue
+        statuses = {ev.get("id"): ev.get("status") for ev in evs
+                    if isinstance(ev, dict) and ev.get("type") == "status" and ev.get("id") is not None}
+        for ev in evs:
+            if not isinstance(ev, dict) or ev.get("type") != "universe" or ev.get("verification") != "verified":
+                continue
+            name = str(ev.get("name") or "").strip()
+            if not name:
+                continue
+            candidates.append({
+                "name": name,
+                "industry": str(ev.get("industry") or ""),
+                "one_liner": str(ev.get("one_liner") or ""),
+                "evidence_quote": str(ev.get("evidence_quote") or ""),
+                "source_url": str(ev.get("source_url") or ""),
+                "receipt_url": str(ev.get("receipt_url") or ""),
+                "status": str(statuses.get(ev.get("id")) or "unknown"),
+                "idea": idea,
+            })
+    # Best-evidenced first (stable sort keeps file/event order within a tier), then dedupe by name.
+    candidates.sort(key=lambda c: -(bool(c["evidence_quote"].strip()) + bool(c["receipt_url"].strip())))
+    seen, groups = set(), {}
+    for c in candidates:
+        k = c["name"].lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        groups.setdefault(c["industry"].strip().lower(), []).append(c)
+    out, queues = [], list(groups.values())
+    while queues and len(out) < SHOWCASE_MAX:
+        for q in queues:
+            if q and len(out) < SHOWCASE_MAX:
+                out.append(q.pop(0))
+        queues = [q for q in queues if q]
+    return out
+
+
+@app.get("/api/showcase")
+def showcase():
+    """Free: verified companies pulled from recorded runs (no external calls). Never raises."""
+    try:
+        paths = sorted(CACHE.glob("*.json"))
+        key = (str(CACHE), tuple((p.name, p.stat().st_mtime) for p in paths))
+        if _showcase_cache["key"] != key:
+            _showcase_cache["items"] = _build_showcase(paths)
+            _showcase_cache["key"] = key
+        return [dict(i) for i in _showcase_cache["items"]]
+    except Exception:  # noqa: BLE001
+        return []
+
+
 @app.get("/api/replay")
 async def replay(file: str, speed: float = 1.0):
     """Replays a recorded live run with its real timing (capped), for a safe stage demo."""
