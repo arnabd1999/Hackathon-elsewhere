@@ -40,9 +40,6 @@
   .search input::placeholder{color:var(--faint)}
   .search .go{border:1px solid var(--line);background:#141414;color:var(--dim);border-radius:6px;width:26px;height:24px;cursor:pointer;font-size:12px;
     display:grid;place-items:center;transition:all .2s}
-  #sound{border:1px solid var(--line);background:none;color:var(--dim);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;flex:none;transition:all .2s}
-  #sound:hover{color:var(--text);border-color:var(--line2)}
-  #sound.off{color:var(--faint);text-decoration:line-through}
   .search .go:hover{color:#1a1405;background:var(--sun);border-color:var(--sun)}
   #demos{background:none;border:1px solid transparent;color:var(--dim);font-size:13px;padding:7px 10px}
   #demos:hover{border-color:var(--line)}
@@ -423,7 +420,6 @@
     <button class="go" id="goTop" type="submit" aria-label="Explore">↵</button>
   </form>
   <select id="demos" aria-label="Replay a recorded run"><option value="">Replay a run…</option></select>
-  <button id="sound" type="button" aria-label="Mute music" title="Music on / off">♪</button>
   <span class="mockbadge" id="mockbadge" hidden>Mock data</span>
 </header>
 
@@ -1137,78 +1133,6 @@ function onAnalysis(ev){
   $("meansWrap").hidden = !(m || ev.summary);
 }
 
-/* ---------- ambient music: a soft generated pad, no audio file ---------- */
-const Music = (() => {
-  let ctx = null, master = null;
-  let muted = false; try { muted = localStorage.getItem("elsewhere-muted") === "1"; } catch {}
-  const VOL = .05;
-  // Happy loop, ~72 BPM: a soft pad cycling Cmaj7 > Fmaj7 > Am7 > G (8 s each, crossfaded so nothing clicks)
-  // plus a music-box pluck wandering over C major pentatonic about every other beat.
-  const BEAT = 60 / 72, CHORD_LEN = 8;
-  const CHORDS = [
-    [65.41, 164.81, 196.00, 246.94],   // Cmaj7: C2 E3 G3 B3
-    [87.31, 174.61, 220.00, 329.63],   // Fmaj7: F2 F3 A3 E4
-    [110.00, 196.00, 261.63, 329.63],  // Am7:   A2 G3 C4 E4
-    [98.00, 196.00, 246.94, 293.66],   // G:     G2 G3 B3 D4
-  ];
-  const PENTA = [523.25, 587.33, 659.25, 783.99, 880.00];  // C5 D5 E5 G5 A5
-  let bus = null, nextChord = 0, chordIx = 0, nextBeat = 0, note = 2;
-  function pad(t, freqs){
-    freqs.forEach((f, i) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = i === 0 ? "sine" : (i % 2 ? "triangle" : "sine"); o.frequency.value = f; o.detune.value = (i - 1.5) * 3;
-      const peak = i === 0 ? .16 : .11;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(peak, t + 2);                  // soft swell in
-      g.gain.setValueAtTime(peak, t + CHORD_LEN - .5);
-      g.gain.linearRampToValueAtTime(0, t + CHORD_LEN + 2);         // overlaps the next chord's swell
-      o.connect(g).connect(bus); o.start(t); o.stop(t + CHORD_LEN + 2.1);
-    });
-  }
-  function pluck(t){
-    note = Math.max(0, Math.min(PENTA.length - 1, note + [-1, 0, 1][Math.floor(Math.random() * 3)] * (Math.random() < .3 ? 2 : 1)));
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = "sine"; o.frequency.value = PENTA[note];
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.22, t + .008);
-    g.gain.exponentialRampToValueAtTime(.001, t + 1.5);
-    o.connect(g).connect(bus); o.start(t); o.stop(t + 1.6);
-  }
-  function tick(){
-    if (!ctx || muted || ctx.state !== "running") return;              // nothing to schedule while silent
-    const now = ctx.currentTime, ahead = now + .6;
-    if (nextChord < now) nextChord = now + .05;                         // catch up after a background tab pause
-    if (nextBeat < now) nextBeat = now + .05;
-    while (nextChord < ahead){ pad(nextChord, CHORDS[chordIx]); chordIx = (chordIx + 1) % CHORDS.length; nextChord += CHORD_LEN; }
-    while (nextBeat < ahead){ if (Math.random() < .5) pluck(nextBeat); nextBeat += BEAT; }
-  }
-  function build(){
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    master = ctx.createGain(); master.gain.value = 0;
-    // light reverb from a decaying noise impulse
-    const len = ctx.sampleRate * 3, imp = ctx.createBuffer(2, len, ctx.sampleRate);
-    for (let c = 0; c < 2; c++){ const d = imp.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5); }
-    const verb = ctx.createConvolver(); verb.buffer = imp;
-    bus = ctx.createBiquadFilter(); bus.type = "lowpass"; bus.frequency.value = 2000; bus.Q.value = .3;   // brighter than before
-    const wet = ctx.createGain(); wet.gain.value = .5;
-    bus.connect(master); bus.connect(verb).connect(wet).connect(master); master.connect(ctx.destination);
-    setInterval(tick, 200);
-  }
-  function apply(){
-    const b = $("sound"); b.classList.toggle("off", muted); b.setAttribute("aria-label", muted ? "Play music" : "Mute music");
-    if (!ctx) return; const t = ctx.currentTime;
-    master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t);
-    master.gain.linearRampToValueAtTime(muted ? 0 : VOL, t + (muted ? .4 : 3));
-  }
-  return {
-    start(){ try { if (!ctx) build(); if (ctx.state === "suspended") ctx.resume(); apply(); } catch {} },
-    toggle(){ muted = !muted; try { localStorage.setItem("elsewhere-muted", muted ? "1" : "0"); } catch {} this.start(); },
-    init(){ apply(); $("sound").onclick = () => this.toggle();
-      // browsers only allow sound after a user gesture: start on the first click anywhere
-      document.addEventListener("pointerdown", () => this.start(), {once:true}); },
-  };
-})();
-Music.init();
-
 /* ---------- run ---------- */
 function handle(ev){
   if (ev.type === "stage") setTicker(ev.msg);
@@ -1234,7 +1158,6 @@ function forgetRun(){
   document.body.classList.remove("running", "started"); document.body.classList.add("landing");
 }
 async function start(kind, arg, idea){
-  Music.start();
   document.body.classList.remove("landing"); document.body.classList.add("running");
   // remove the start screen once its fade is done; a timer still fires in background tabs, where CSS transitions can stall
   setTimeout(() => document.body.classList.add("started"), 900);
