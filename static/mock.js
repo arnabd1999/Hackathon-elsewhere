@@ -183,6 +183,7 @@ function script(idea) {
   });
   ev.push([300, { type: "stage", msg: "Sizing up the market…" }]);
   ev.push([500, ANALYSIS]);
+  ev.push([120, { type: "privacy", stored: false, discarded_at: new Date().toISOString() }]);
   ev.push([200, { type: "done", count: UNIVERSES.length }]);
   return ev;
 }

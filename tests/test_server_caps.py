@@ -43,3 +43,19 @@ class Caps(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Privacy(unittest.TestCase):
+    def test_privacy_event_comes_right_before_done_and_reports_storage(self):
+        client = TestClient(server.app)
+
+        async def fake(idea):
+            yield {"type": "stage", "msg": "x"}
+            yield {"type": "done", "count": 0}
+
+        with mock.patch.object(server, "explore", fake), mock.patch.object(server, "RECORD_RUNS", False):
+            r = client.get("/api/explore", params={"idea": "secret idea"})
+        types = [line for line in r.text.splitlines() if line.startswith("data:")]
+        self.assertIn('"type": "privacy"', types[-2])
+        self.assertIn('"stored": false', types[-2])
+        self.assertIn('"type": "done"', types[-1])

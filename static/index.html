@@ -189,6 +189,12 @@
   #ticker{position:absolute;right:16px;bottom:14px;z-index:3;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim);
     background:rgba(14,14,14,.85);border:1px solid var(--line);border-radius:999px;padding:6px 12px;opacity:0;transition:opacity .4s;max-width:46%}
   #ticker.on{opacity:1}
+  #ticker:has(#privacy:not([hidden])){flex-wrap:wrap;row-gap:6px}
+  #privacy{display:flex;flex-basis:100%;align-items:center;justify-content:space-between;gap:10px;padding-top:6px;border-top:1px solid var(--line, rgba(255,255,255,.12))}
+  #privacy[hidden]{display:none}
+  #privacy button{font:inherit;color:inherit;background:none;border:1px solid var(--line, rgba(255,255,255,.18));border-radius:999px;padding:2px 9px;cursor:pointer}
+  #privacy button:hover{color:var(--text, #fff)}
+  .privnote{font-size:12px;color:var(--dim);margin-top:10px;opacity:.85}
   #ticker span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .spinner{width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--sun);border-radius:50%;animation:rot .8s linear infinite;flex:none}
   #ticker.done .spinner{animation:none;border-color:var(--ok)}
@@ -471,7 +477,7 @@
     <button id="seeall" type="button">⤢ See all</button>
     <div id="tour" role="group" aria-label="Top matches"></div>
     <div id="legend"><span><i class="dot" style="background:conic-gradient(#ffcf4a,#5fe3b3,#b48cff,#ff8fd0,#ffcf4a)"></i>Other industries</span><span><i class="dot" style="background:var(--collab)"></i>Partner</span><span><i class="dot" style="background:var(--comp)"></i>Competitor</span><span class="note">Bigger = more relevant</span><span class="note">Use arrow keys to explore</span></div>
-    <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
+    <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span><span id="privacy" hidden></span></div>
     <div id="tip"></div>
 
     <div id="hero">
@@ -483,6 +489,7 @@
         <button class="btn" type="submit">Explore →</button>
       </form>
       <div class="examples" id="examples"></div>
+      <p class="privnote">Your idea is sent to You.com to search the live web, under You.com's data policy. We don't store it.</p>
     </div>
   </section>
 
@@ -713,7 +720,7 @@ function reset(){
   document.body.classList.remove("show-left", "show-right", "focus"); document.body.dataset.view = "elsewhere"; stopGlobe();
   cancelAnimationFrame(vbRaf); setVB(VB0.slice());
   $("darts").innerHTML = ""; $("trails").innerHTML = ""; $("clusters").innerHTML = ""; $("links").innerHTML = ""; $("grave").innerHTML = "";
-  $("meansWrap").hidden = true; $("means").innerHTML = "";
+  $("meansWrap").hidden = true; $("means").innerHTML = ""; $("privacy").hidden = true; $("privacy").innerHTML = "";
   $("core").textContent = "…"; $("mech").textContent = "…"; $("choices").innerHTML = ""; $("queries").innerHTML = ""; $("qsum").textContent = "0 live searches";
   drawBoard(null); renderHeadline(); renderRight();
 }
@@ -1143,7 +1150,21 @@ function handle(ev){
   else if (ev.type === "status") onStatus(ev);
   else if (ev.type === "analysis") onAnalysis(ev);
   else if (ev.type === "done"){ S.done = true; renderGrave(); setTimeout(autoFocus, 700); setTicker(`Done · ${ev.count} universes found and checked`, true); loadDemos(); }
+  else if (ev.type === "privacy") onPrivacy(ev);
   else if (ev.type === "error"){ setTicker("Error: " + ev.msg, true); $("ticker").style.borderColor = "var(--comp)"; }
+}
+// Receipt for the idea itself: when the server discarded it, plus a button that clears it from this browser too.
+function onPrivacy(ev){
+  const d = new Date(ev.discarded_at); const t = isNaN(d) ? "" : d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+  $("privacy").innerHTML = (ev.stored ? "This run was saved to this server's Replay list." : `Your idea was discarded${t ? " at " + t : ""}. Nothing stored on our server.`)
+    + ` <button type="button" id="forget">Forget this run</button>`;
+  $("privacy").hidden = false;
+  $("forget").onclick = forgetRun;
+}
+function forgetRun(){
+  reset();
+  $("idea").value = ""; $("ideaTop").value = ""; $("ticker").classList.remove("on", "done");
+  document.body.classList.remove("running", "started"); document.body.classList.add("landing");
 }
 async function start(kind, arg, idea){
   document.body.classList.remove("landing"); document.body.classList.add("running");

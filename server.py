@@ -94,6 +94,12 @@ async def api_explore(idea: str):
         events = []
         try:
             async for ev in explore(idea):
+                if ev.get("type") == "done":
+                    # Sent before done: the browser closes the stream on done.
+                    priv = {"type": "privacy", "stored": RECORD_RUNS,
+                            "discarded_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+                    events.append({"t": time.time(), "ev": priv})
+                    yield _sse(priv)
                 events.append({"t": time.time(), "ev": ev})
                 yield _sse(ev)
         except Exception as e:  # noqa: BLE001
@@ -103,6 +109,7 @@ async def api_explore(idea: str):
         finally:
             if RECORD_RUNS and any(e["ev"]["type"] == "universe" for e in events):
                 (CACHE / f"{_slug(idea)}.json").write_text(json.dumps({"idea": idea, "events": events}))
+            events.clear()  # nothing about this run stays in server memory
 
     return StreamingResponse(gen(), media_type="text/event-stream", headers=SSE_HEADERS)
 
