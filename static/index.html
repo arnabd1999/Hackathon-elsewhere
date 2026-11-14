@@ -8,27 +8,27 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#06070c; --bg2:#0b0d16; --panel:rgba(16,18,30,.72); --panel-solid:#10121e; --line:#1e2236; --line2:#2a2f4a;
-    --text:#eceef7; --dim:#8b91a9; --faint:#4a506a;
-    --sun:#ffd36b; --sun2:#ffb648;
-    --collab:#4fd1c5; --comp:#ff7a6b; --insp:#b18cff; --dead:#5b6075;
-    --ok:#5ee28a; --warn:#f5b748;
+    --bg:#000000; --bg2:#070707; --panel:rgba(14,14,14,.78); --panel-solid:#0e0e0e; --line:#1f1f1f; --line2:#333333;
+    --text:#ffffff; --dim:#9b9b9b; --faint:#555555;
+    --sun:#ffcf4a; --sun2:#f2a516; --gold-glow:rgba(255,207,74,.55);
+    --insp:#ffcf4a; --collab:#ffffff; --comp:#ffffff; --dead:#4a4a4a;
+    --ok:#ffffff; --warn:#f2a516;
     --radius:14px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
     font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
   body{background:
-    radial-gradient(1200px 700px at 50% 45%, #141634 0%, transparent 60%),
-    radial-gradient(800px 500px at 85% 10%, #1d1438 0%, transparent 60%),
+    radial-gradient(900px 620px at 50% 50%, rgba(255,190,60,.10) 0%, transparent 62%),
+    radial-gradient(800px 500px at 85% 10%, #191919 0%, transparent 60%),
     var(--bg);overflow:hidden}
   button,select,input{font:inherit;color:inherit}
-  a{color:#9ab4ff;word-break:break-word}
+  a{color:#b4b4b4;word-break:break-word}
   .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
 
   /* ---------- top bar ---------- */
   header{position:relative;z-index:5;display:flex;gap:12px;align-items:center;padding:12px 20px;
-    border-bottom:1px solid var(--line);background:rgba(6,7,12,.6);backdrop-filter:blur(10px);height:60px}
+    border-bottom:1px solid var(--line);background:rgba(7,7,7,.6);backdrop-filter:blur(10px);height:60px}
   .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px;font-size:16px;white-space:nowrap}
   .brand .logo{width:22px;height:22px}
   .brand small{color:var(--dim);font-weight:500;font-size:13px}
@@ -48,7 +48,7 @@
   html{overflow-x:hidden}
   main{position:relative;height:calc(100% - 60px);overflow:hidden}
   aside{position:absolute;top:0;bottom:0;z-index:8;width:360px;max-width:100%;overflow:auto;padding:18px 18px 40px;
-    background:rgba(9,10,17,.94);backdrop-filter:blur(16px);opacity:0;pointer-events:none;
+    background:rgba(10,10,10,.94);backdrop-filter:blur(16px);opacity:0;pointer-events:none;
     transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .3s}
   #left{left:0;border-right:1px solid var(--line);transform:translateX(-100%)}
   #right{right:0;width:390px;border-left:1px solid var(--line);transform:translateX(100%)}
@@ -57,7 +57,7 @@
     width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1}
   .xbtn:hover{color:var(--text);border-color:var(--line2)}
   .corner{position:absolute;top:18px;z-index:4;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim);
-    background:rgba(12,14,24,.8);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;transition:all .2s}
+    background:rgba(14,14,14,.8);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;transition:all .2s}
   .corner:hover{color:var(--text);border-color:var(--line2)}
   #openLeft{left:18px} #openRight{right:18px}
   body.landing .corner{opacity:0;pointer-events:none}
@@ -70,18 +70,18 @@
   .sec>div{padding:0 14px 14px}
   .takeaway{font-size:15px;font-weight:600;line-height:1.4}
   .takeaway small{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;color:var(--dim);font-weight:600;margin-bottom:6px}
-  h3{font-size:11px;text-transform:uppercase;letter-spacing:1.3px;color:var(--dim);margin:20px 0 9px;font-weight:600}
+  h3{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:28px 0 12px;font-weight:600}
   h3:first-child{margin-top:0}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
   .core{font-size:15px;line-height:1.45;font-weight:500}
-  .core.sun{border-color:#3d3520;background:linear-gradient(135deg,rgba(60,48,16,.45),rgba(16,18,30,.7))}
-  .core.mech{border-color:#3a2d60;background:linear-gradient(135deg,rgba(50,30,90,.45),rgba(16,18,30,.7));font-size:14px}
+  .core.sun{border-color:#353535;background:linear-gradient(135deg,rgba(60,48,16,.45),rgba(18,18,18,.7))}
+  .core.mech{border-color:#333333;background:linear-gradient(135deg,rgba(39,39,39,.45),rgba(18,18,18,.7));font-size:14px}
   .choices{display:flex;flex-direction:column;gap:6px}
   .choice{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);
     border-radius:10px;background:var(--panel);cursor:pointer;transition:border-color .2s,background .2s}
-  .choice:hover,.choice.on{border-color:var(--line2);background:rgba(30,34,54,.8)}
+  .choice:hover,.choice.on{border-color:var(--line2);background:rgba(35,35,35,.8)}
   .choice .n{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700;
-    background:#1b1e30;color:var(--dim)}
+    background:#1f1f1f;color:var(--dim)}
   .choice .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim)}
   .choice .v{font-weight:600}
   .choice .cnt{float:right;font-size:11px;color:var(--dim);font-weight:500}
@@ -92,34 +92,43 @@
   /* ---------- stage ---------- */
   #stage{position:absolute;inset:0;overflow:hidden}
   #board{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .wedge{fill:rgba(255,255,255,.018);stroke:#2c3250;stroke-width:1.5;transition:fill .3s}
+  .wedge{fill:rgba(255,255,255,.018);stroke:#333333;stroke-width:1.5;transition:fill .3s}
   .wedge.alt{fill:rgba(255,255,255,.045)}
   .wedge.hl{fill:rgba(255,211,107,.07)}
-  .ring{fill:none;stroke:#2a3050;stroke-width:1.2}
-  .ringnum{fill:#59607e;font-size:12px;font-family:"JetBrains Mono",monospace}
+  .ring{fill:none;stroke:#313131;stroke-width:1.2}
+  .ringnum{fill:#616161;font-size:12px;font-family:"JetBrains Mono",monospace}
   .axislabel{fill:var(--dim);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600}
   .axisval{fill:var(--text);font-size:13px;font-weight:600}
   .band{fill:none;stroke:url(#bandGrad);stroke-width:92;opacity:.55}
-  .bandlabel{fill:#a48ae6;font-size:11px;letter-spacing:2.2px;font-weight:700}
+  .bandlabel{fill:#ffcf4a;font-size:11px;letter-spacing:2.2px;font-weight:700}
   .bull{fill:url(#sunGrad);filter:url(#glow)}
   .bulltxt{fill:#2a1d04;font-weight:800;font-size:15px;letter-spacing:1px}
   .spin{transform-origin:500px 500px;animation:spin 140s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   body.landing .boardwrap{opacity:.35;transform:scale(1.08)}
-  body.landing #bull{opacity:0} #bull{transition:opacity .8s}
+  body.landing #bull,body.landing .bandlabel{opacity:0} #bull{transition:opacity .8s}
+  #board{transform:perspective(1600px) rotateX(calc(16deg + var(--rx,0deg))) rotateY(var(--ry,0deg));transform-origin:50% 55%}
+  body.landing #board{transform:perspective(1600px) rotateX(38deg) scale(1.1)}
+  .dglow{pointer-events:none;mix-blend-mode:screen}
+  .links path{fill:none;stroke:#fff;stroke-opacity:.16;stroke-width:1;stroke-dasharray:2 4}
+  .links path.gold{stroke:var(--sun);stroke-opacity:.35}
+  .tw{animation:tw 3.5s ease-in-out infinite alternate}
+  @keyframes tw{from{opacity:.15}to{opacity:.9}}
+  .dart.comp .body{fill:#000!important;stroke:#fff;stroke-width:2.5}
+  .dart.insp .body{filter:drop-shadow(0 0 8px var(--gold-glow))}
   .boardwrap{transition:opacity 1s,transform 1.2s cubic-bezier(.2,.8,.2,1);transform-origin:500px 500px}
 
   .dart{cursor:pointer;transition:transform 1.05s cubic-bezier(.16,1,.3,1),opacity .5s}
-  .dart .body{stroke:#06070c;stroke-width:2;transition:fill .5s,r .2s}
+  .dart .body{stroke:#070707;stroke-width:2;transition:fill .5s,r .2s}
   .dart:hover .body,.dart.sel .body{stroke:#fff;stroke-width:2.5}
-  .dart .lbl{fill:var(--text);font-size:13px;font-weight:600;pointer-events:none;paint-order:stroke;stroke:#06070c;stroke-width:4px;stroke-linejoin:round}
+  .dart .lbl{fill:var(--text);font-size:13px;font-weight:600;pointer-events:none;paint-order:stroke;stroke:#070707;stroke-width:4px;stroke-linejoin:round}
   .dart .halo{fill:none;stroke-width:2;opacity:0}
   .dart.unverified{opacity:.42} .dart.unverified .body{stroke-dasharray:3 3;stroke:#aab}
   .dart.st-thriving .halo{stroke:var(--ok);opacity:1;animation:pulse 1.8s infinite}
   .dart.st-active .halo{stroke:var(--ok);opacity:.5}
   .dart.st-pivoted .halo{stroke:var(--warn);opacity:.95;stroke-dasharray:4 3}
   .dart.st-shut_down .body{fill:var(--dead)!important} .dart.st-shut_down .lbl{fill:var(--dim)}
-  .dart .x{stroke:#cfd3e0;stroke-width:2;opacity:0;transition:opacity .4s}
+  .dart .x{stroke:#d3d3d3;stroke-width:2;opacity:0;transition:opacity .4s}
   .dart.st-shut_down .x{opacity:.9}
   .dart.dim{opacity:.08!important}
   @keyframes pulse{0%{stroke-width:2;opacity:.9;r:17}100%{stroke-width:1;opacity:0;r:34}}
@@ -133,10 +142,12 @@
   /* headline over board */
   #headline{position:absolute;left:200px;right:200px;top:16px;z-index:3;text-align:center;pointer-events:none;opacity:0;transition:opacity .5s}
   body.running #headline{opacity:1}
-  #headline .big{font-size:22px;font-weight:800;letter-spacing:-.3px}
-  #headline .big em{font-style:normal;background:linear-gradient(90deg,var(--sun),#ff9f6b);-webkit-background-clip:text;background-clip:text;color:transparent}
-  #filters{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px;pointer-events:auto}
-  .pill{font-size:12px;border:1px solid var(--line);background:rgba(12,14,24,.85);border-radius:999px;padding:5px 11px;cursor:pointer;color:var(--dim);display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+  #headline .big{font-size:21px;font-weight:600;letter-spacing:.2px;line-height:1.4}
+  #headline .big .sep{color:var(--faint);margin:0 10px}
+  #headline .big em.w{background:none;color:#fff}
+  #headline .big em{font-style:normal;background:linear-gradient(90deg,var(--sun),#b0b0b0);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #filters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px;pointer-events:auto}
+  .pill{font-size:12px;border:1px solid var(--line);background:rgba(14,14,14,.85);border-radius:999px;padding:5px 11px;cursor:pointer;color:var(--dim);display:inline-flex;align-items:center;gap:6px;transition:all .2s}
   .pill b{color:var(--text);font-weight:700}
   .pill:hover{border-color:var(--line2)}
   .pill.on{border-color:var(--sun);color:var(--text);background:rgba(60,48,16,.5)}
@@ -146,14 +157,14 @@
   body.running #howto{opacity:1}
   #howto b{color:var(--text)}
   #ticker{position:absolute;right:16px;bottom:14px;z-index:3;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim);
-    background:rgba(12,14,24,.85);border:1px solid var(--line);border-radius:999px;padding:6px 12px;opacity:0;transition:opacity .4s;max-width:46%}
+    background:rgba(14,14,14,.85);border:1px solid var(--line);border-radius:999px;padding:6px 12px;opacity:0;transition:opacity .4s;max-width:46%}
   #ticker.on{opacity:1}
   #ticker span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .spinner{width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--sun);border-radius:50%;animation:rot .8s linear infinite;flex:none}
   #ticker.done .spinner{animation:none;border-color:var(--ok)}
   @keyframes rot{to{transform:rotate(360deg)}}
 
-  #tip{position:absolute;z-index:6;pointer-events:none;background:rgba(12,14,24,.96);border:1px solid var(--line2);border-radius:12px;
+  #tip{position:absolute;z-index:6;pointer-events:none;background:rgba(14,14,14,.96);border:1px solid var(--line2);border-radius:12px;
     padding:10px 12px;width:250px;font-size:12px;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;box-shadow:0 10px 40px #0008}
   #tip.on{opacity:1;transform:none}
   #tip .t{font-weight:700;font-size:14px}
@@ -163,34 +174,34 @@
   #hero{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
     padding:24px;transition:opacity .6s,transform .8s cubic-bezier(.2,.8,.2,1)}
   body.running #hero{opacity:0;transform:translateY(-30px) scale(.98);pointer-events:none}
-  #hero .eyebrow{font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--sun);font-weight:700;margin-bottom:14px}
-  #hero h1{margin:0 0 22px;font-weight:300;text-transform:uppercase;line-height:1.15}
-  #hero h1 .l1{display:block;font-size:clamp(15px,1.9vw,24px);letter-spacing:.42em;color:#cfd3e4;margin-bottom:10px;padding-left:.42em}
+  #hero .eyebrow{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--sun);font-weight:600;margin-bottom:28px}
+  #hero h1{margin:0 0 34px;font-weight:300;text-transform:uppercase;line-height:1.15}
+  #hero h1 .l1{display:block;font-size:clamp(15px,1.9vw,24px);letter-spacing:.42em;margin-bottom:20px;color:#d3d3d3;margin-bottom:10px;padding-left:.42em}
   #hero h1 em{display:block;font-size:clamp(48px,9vw,120px);letter-spacing:.22em;padding-left:.22em;font-weight:300}
-  #hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--sun),#ff9f6b 40%,var(--insp));-webkit-background-clip:text;background-clip:text;color:transparent}
-  #hero p{color:var(--dim);font-size:17px;max-width:620px;margin:0 0 28px}
-  .bigsearch{display:flex;gap:8px;width:min(720px,100%);background:rgba(16,18,30,.85);border:1px solid var(--line2);border-radius:16px;padding:8px;
+  #hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--sun),#b0b0b0 40%,var(--insp));-webkit-background-clip:text;background-clip:text;color:transparent}
+  #hero p{color:var(--dim);font-size:17px;line-height:1.65;max-width:600px;margin:0 0 40px}
+  .bigsearch{display:flex;gap:8px;width:min(720px,100%);background:rgba(18,18,18,.85);border:1px solid var(--line2);border-radius:16px;padding:8px;
     box-shadow:0 0 0 6px rgba(255,211,107,.04),0 20px 60px #0009}
   .bigsearch input{flex:1;background:transparent;border:none;outline:none;padding:10px 12px;font-size:16px;min-width:0}
   .bigsearch .btn{padding:12px 20px;font-size:15px;border-radius:11px}
-  .examples{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px;max-width:760px}
-  .examples button{font-size:12.5px;background:rgba(16,18,30,.7);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--dim)}
+  .examples{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px;max-width:760px}
+  .examples button{font-size:12.5px;background:rgba(18,18,18,.7);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--dim)}
   .examples button:hover{color:var(--text);border-color:var(--line2)}
   .threeup{display:flex;gap:28px;margin-top:38px;color:var(--dim);font-size:13px;flex-wrap:wrap;justify-content:center}
   .threeup b{color:var(--text)}
 
   #cards{position:absolute;inset:0;z-index:3;pointer-events:none;perspective:1200px;transition:opacity .6s}
   body.running #cards{opacity:0}
-  .pc{position:absolute;width:210px;padding:12px 14px;border-radius:10px;background:linear-gradient(160deg,rgba(28,31,52,.9),rgba(12,14,24,.9));
-    border:1px solid #2b3150;box-shadow:0 30px 60px #000a;font-size:11.5px;color:var(--dim);opacity:.55;
+  .pc{position:absolute;width:210px;padding:12px 14px;border-radius:10px;background:linear-gradient(160deg,rgba(32,32,32,.9),rgba(14,14,14,.9));
+    border:1px solid #323232;box-shadow:0 30px 60px #000a;font-size:11.5px;color:var(--dim);opacity:.55;
     -webkit-box-reflect:below 4px linear-gradient(transparent 70%,rgba(255,255,255,.08));animation:drift 14s ease-in-out infinite alternate}
   .pc b{display:block;color:var(--text);font-size:14px;margin-bottom:2px} .pc i{font-style:normal;font-size:10px;letter-spacing:1.4px;text-transform:uppercase}
-  .pc q{display:block;margin-top:8px;color:#b8bdd2;font-style:italic}
+  .pc q{display:block;margin-top:8px;color:#bdbdbd;font-style:italic}
   @keyframes drift{from{transform:var(--t) translateY(0)}to{transform:var(--t) translateY(-18px)}}
   @media (max-width:960px){ #cards{display:none} }
   /* ---------- right panel ---------- */
   .rank{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px;border:1px solid transparent;border-radius:12px;cursor:pointer;transition:background .2s,border-color .2s}
-  .rank:hover,.rank.hov{background:rgba(30,34,54,.6);border-color:var(--line)}
+  .rank:hover,.rank.hov{background:rgba(35,35,35,.6);border-color:var(--line)}
   .rank .nm{font-weight:600;display:flex;align-items:center;gap:7px;min-width:0}
   .rank .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rank .pct{font-family:"JetBrains Mono",monospace;font-weight:500;font-size:13px}
@@ -198,8 +209,8 @@
   .rank.dim{opacity:.25}
   .dna{display:flex;gap:3px}
   .dna i{width:14px;height:6px;border-radius:2px;background:var(--sun)}
-  .dna i.diff{background:transparent;box-shadow:inset 0 0 0 1.5px #59607e}
-  .bar{grid-column:1/-1;height:3px;background:#1a1e30;border-radius:2px;overflow:hidden}
+  .dna i.diff{background:transparent;box-shadow:inset 0 0 0 1.5px #616161}
+  .bar{grid-column:1/-1;height:3px;background:#1e1e1e;border-radius:2px;overflow:hidden}
   .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sun2),var(--sun));border-radius:2px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
 
   .dhead{display:flex;gap:14px;align-items:center}
@@ -214,7 +225,7 @@
   .cmp td:first-child{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:1px;width:84px;padding-top:9px}
   .cmp tr.diff td:nth-child(3){color:var(--sun);font-weight:600}
   .cmp tr.same td:nth-child(3)::after{content:"  same";color:var(--faint);font-size:11px}
-  blockquote{margin:0;padding:10px 12px;border-left:3px solid var(--collab);background:rgba(10,30,30,.4);border-radius:8px;font-size:13px}
+  blockquote{margin:0;padding:10px 12px;border-left:3px solid var(--collab);background:rgba(26,26,26,.4);border-radius:8px;font-size:13px}
   .v-verified{color:var(--ok)} .v-partial{color:var(--warn)} .v-unverified{color:var(--comp)}
   .status{display:inline-flex;align-items:center;gap:6px;font-weight:700}
   .conflict{color:var(--warn);font-size:12px;margin-top:8px}
@@ -224,10 +235,10 @@
   @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .empty{color:var(--dim);font-size:13px;padding:10px 4px}
 
-  #board,#headline{transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+  #board,#headline{transition:transform .6s cubic-bezier(.2,.8,.2,1)}
   @media (min-width:961px){
-    body.show-right #board{transform:translateX(-195px)}
-    body.show-left #board{transform:translateX(180px)}
+    body.show-right #board{transform:translateX(-195px) perspective(1600px) rotateX(12deg)}
+    body.show-left #board{transform:translateX(180px) perspective(1600px) rotateX(12deg)}
     body.show-left #openLeft,body.show-right #openRight,body.show-left #howto{opacity:0;pointer-events:none}
   }
   /* ---------- responsive ---------- */
@@ -271,7 +282,7 @@
 <body class="landing">
 <header>
   <div class="brand">
-    <svg class="logo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="none" stroke="#ffd36b" stroke-opacity=".35"/><circle cx="12" cy="12" r="7" fill="none" stroke="#ffd36b" stroke-opacity=".6"/><circle cx="12" cy="12" r="3" fill="#ffd36b"/><circle cx="20" cy="6" r="1.8" fill="#b18cff"/></svg>
+    <svg class="logo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="none" stroke="#ffd36b" stroke-opacity=".35"/><circle cx="12" cy="12" r="7" fill="none" stroke="#ffd36b" stroke-opacity=".6"/><circle cx="12" cy="12" r="3" fill="#ffd36b"/><circle cx="20" cy="6" r="1.8" fill="#9c9c9c"/></svg>
     Elsewhere <small>· your idea's multiverse</small>
   </div>
   <form class="search" id="topForm">
@@ -301,14 +312,16 @@
       <defs>
         <radialGradient id="sunGrad"><stop offset="0" stop-color="#fff3c9"/><stop offset=".55" stop-color="#ffd36b"/><stop offset="1" stop-color="#ff9f45"/></radialGradient>
         <radialGradient id="bandGrad" cx="500" cy="500" r="460" gradientUnits="userSpaceOnUse">
-          <stop offset=".78" stop-color="#2a1b52" stop-opacity="0"/><stop offset=".86" stop-color="#3b2575"/><stop offset=".96" stop-color="#2a1b52" stop-opacity="0"/></radialGradient>
+          <stop offset=".78" stop-color="#3a2a05" stop-opacity="0"/><stop offset=".86" stop-color="#6b4c0c"/><stop offset=".96" stop-color="#3a2a05" stop-opacity="0"/></radialGradient>
         <linearGradient id="trailGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd36b"/><stop offset="1" stop-color="#fff"/></linearGradient>
         <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <radialGradient id="dartGlow"><stop offset="0" stop-color="#ffcf4a" stop-opacity=".9"/><stop offset=".45" stop-color="#ffcf4a" stop-opacity=".25"/><stop offset="1" stop-color="#ffcf4a" stop-opacity="0"/></radialGradient>
         <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
       </defs>
       <g id="stars"></g>
       <g class="boardwrap" id="boardwrap">
         <g id="static"></g>
+        <g id="links" class="links"></g>
         <g id="trails"></g>
         <g id="darts"></g>
         <g id="bull"></g>
@@ -321,15 +334,15 @@
     </div>
     <button class="corner" id="openLeft" type="button">◎ Your idea, decoded</button>
     <button class="corner" id="openRight" type="button">☰ Ranked list</button>
-    <div id="howto"><b>Closer to the centre = closer to your idea.</b> Each ring out is one more choice done differently; the slice shows which. The purple band is other industries.</div>
+    <div id="howto"><b>Closer to the centre = closer to your idea.</b> Each ring out is one more choice done differently; the slice shows which. The gold outer band is other industries.</div>
     <div id="ticker"><div class="spinner"></div><span id="tickertxt"></span></div>
     <div id="tip"></div>
 
     <div id="cards" aria-hidden="true"></div>
     <div id="hero">
-      <div class="eyebrow">Live-web founder research</div>
+      <div class="eyebrow">Find your inspirations &amp; collaborators</div>
       <h1><span class="l1">Your idea already exists</span><em>Elsewhere</em></h1>
-      <p>Somewhere, someone has already solved a version of your problem, often in an industry you'd never think to search. Describe your idea and we'll find them.</p>
+      <p>Somewhere, someone has already solved a version of your problem, often in an industry you'd never think to search. Find who to learn from, and who to build with.</p>
       <form class="bigsearch" id="heroForm">
         <input id="idea" aria-label="Describe your idea" placeholder="e.g. an SMS assistant that helps NYC deli owners track daily cash flow" autofocus>
         <button class="btn primary" type="submit">Find my multiverse →</button>
@@ -371,7 +384,7 @@ const primaryAxis = u => AXES.find(a => (u.divergent_axes || []).includes(a)) ||
 function drawStars(){
   const g = $("stars"); g.innerHTML = "";
   for (let i = 0; i < 220; i++) el("circle", {cx:Math.random()*1000, cy:Math.random()*1000, r:Math.random()*1.3,
-    fill:"#fff", opacity:(Math.random()*.55).toFixed(2)}, g);
+    fill: Math.random() < .12 ? "#ffcf4a" : "#fff", opacity:(Math.random()*.55).toFixed(2), class: Math.random() < .25 ? "tw" : "", style:`animation-delay:-${(Math.random()*4).toFixed(1)}s`}, g);
 }
 function drawBoard(core){
   const g = $("static"); g.innerHTML = "";
@@ -386,7 +399,7 @@ function drawBoard(core){
   });
   for (let d = 1; d <= 5; d++){
     const r = BULL + d * RING;
-    el("circle", {cx:C, cy:C, r, class:"ring", style: d === 1 ? "stroke:#3a3a40" : ""}, spin);
+    el("circle", {cx:C, cy:C, r, class:"ring", style: d === 1 ? "stroke:#3a3a3a" : ""}, spin);
     const [x,y] = polar(r - RING/2, -90 + 36);
     const t = el("text", {x, y: y + 3, class:"ringnum", "text-anchor":"middle"}, spin); t.textContent = d;
   }
@@ -402,7 +415,7 @@ function drawBoard(core){
       const anchor = Math.abs(x - C) < 40 ? "middle" : x > C ? "start" : "end";
       const yy = y < C - 300 ? y - 16 : y;
       const l = el("text", {x, y:yy, class:"axislabel", "text-anchor":anchor}, g); l.textContent = AXIS_NAME[a];
-      const v = el("text", {x, y:yy + 16, class:"axisval", "text-anchor":anchor}, g);
+      const v = el("text", {x, y:yy + 19, class:"axisval", "text-anchor":anchor}, g);
       const val = core.user_execution[a] || "unspecified"; v.textContent = val.length > 26 ? val.slice(0,25) + "…" : val;
     });
   }
@@ -438,6 +451,13 @@ function relax(){
     }
   }
   list.forEach(u => { u.g.style.transform = `translate(${u.x}px,${u.y}px)`; });
+  const L = $("links"); L.innerHTML = "";
+  AXES.forEach(a => {
+    const pts = list.filter(u => u.kind !== "inspiration" && primaryAxis(u) === a).sort((p, q) => p.divergence - q.divergence);
+    if (pts.length) el("path", {d:`M${C},${C} ` + pts.map(u => `L${u.x.toFixed(1)},${u.y.toFixed(1)}`).join(" ")}, L);
+  });
+  const ins = list.filter(u => u.kind === "inspiration").sort((p, q) => Math.atan2(p.y - C, p.x - C) - Math.atan2(q.y - C, q.x - C));
+  if (ins.length > 1) el("path", {class:"gold", d:`M${ins[0].x},${ins[0].y} ` + ins.slice(1).map(u => `L${u.x.toFixed(1)},${u.y.toFixed(1)}`).join(" ") + " Z"}, L);
 }
 
 /* ---------- events ---------- */
@@ -482,6 +502,9 @@ function onUniverse(ev){
   // fly in from outside the board along the same angle
   const ang = Math.atan2(y - C, x - C); const sx = C + Math.cos(ang) * 900, sy = C + Math.sin(ang) * 900;
   g.style.transform = `translate(${sx}px,${sy}px)`; g.style.opacity = 0;
+  const sim0 = similarity(u) ?? 70;
+  el("circle", {r: 22 + sim0 * .32, class:"dglow", fill:"url(#dartGlow)", opacity:(.15 + sim0 / 140).toFixed(2)}, g);
+  if (u.kind === "inspiration") g.classList.add("insp"); else if (u.relationship === "competitor") g.classList.add("comp");
   el("circle", {r:17, class:"halo"}, g);
   const body = el("circle", {r: u.kind === "inspiration" ? 14 : 13, class:"body", fill:colorOf(u)}, g);
   el("path", {d:"M-5,-5 L5,5 M5,-5 L-5,5", class:"x"}, g);
@@ -504,18 +527,17 @@ function onStatus(s){
 /* ---------- headline + filters ---------- */
 const FILTERS = [
   ["all", "All", () => true, null],
-  ["twins", "Near-twins", u => u.kind !== "inspiration" && u.divergence <= 1, "var(--sun)"],
-  ["collab", "Possible partners", u => u.kind !== "inspiration" && u.relationship === "collaborator", "var(--collab)"],
-  ["comp", "Competitors", u => u.kind !== "inspiration" && u.relationship === "competitor", "var(--comp)"],
-  ["insp", "Other industries", u => u.kind === "inspiration", "var(--insp)"],
-  ["alive", "Growing", u => u.status === "thriving", "var(--ok)"],
-  ["dead", "Died: lessons", u => u.status === "shut_down", "var(--dead)"],
+  ["insp", "Inspirations", u => u.kind === "inspiration", "var(--sun)"],
+  ["collab", "Collaborators", u => u.kind !== "inspiration" && u.relationship === "collaborator", "#ffffff"],
+  ["twins", "Near-twins", u => u.kind !== "inspiration" && u.divergence <= 1, null],
+  ["comp", "Competitors", u => u.kind !== "inspiration" && u.relationship === "competitor", null],
+  ["dead", "Lessons", u => u.status === "shut_down", "var(--dead)"],
 ];
 function renderHeadline(){
   const list = Object.values(S.u); const n = list.length;
-  const twins = list.filter(FILTERS[1][2]).length, ins = list.filter(FILTERS[4][2]).length;
+  const ins = list.filter(FILTERS[1][2]).length, col = list.filter(FILTERS[2][2]).length;
   $("headtxt").innerHTML = !n ? (S.core ? "Searching the multiverse…" : "Reading your idea…")
-    : `Your idea exists in <em>${n} other universe${n === 1 ? "" : "s"}</em>.${ins ? ` ${ins} ${ins === 1 ? "is" : "are"} in industries you'd never search.` : twins ? ` ${twins} almost identical to yours.` : ""}`;
+    : `<em>${ins} inspiration${ins === 1 ? "" : "s"}</em> from other industries <span class="sep">·</span> <em class="w">${col} possible collaborator${col === 1 ? "" : "s"}</em>`;
   $("filters").innerHTML = !n ? "" : FILTERS.map(([id, label, fn, color]) => {
     const c = list.filter(fn).length; if (id !== "all" && !c) return "";
     return `<button class="pill ${S.filter === id ? "on" : ""}" data-f="${id}">${color ? `<i class="dot" style="background:${color}"></i>` : ""}${label} <b>${c}</b></button>`;
@@ -541,8 +563,7 @@ function hover(id, on){
   tip.innerHTML = `<div class="t">${esc(u.name)}</div><div class="s">${esc(u.one_liner)}</div>
     ${sim != null ? `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="mono" style="color:var(--sun);font-weight:600">${sim}% like you</span>${dna(u)}</div>` : `<div style="color:var(--insp);font-weight:600;margin-bottom:6px">${esc(u.industry)} · same core concept</div>`}
     <div>${esc(u.divergence_summary)}</div>`;
-  const svg = $("board"), pt = svg.createSVGPoint(); pt.x = u.x; pt.y = u.y;
-  const p = pt.matrixTransform(svg.getScreenCTM()), box = $("stage").getBoundingClientRect();
+  const bb = u.body.getBoundingClientRect(), p = {x: bb.left + bb.width / 2, y: bb.top + bb.height / 2}, box = $("stage").getBoundingClientRect();
   let left = p.x - box.left + 18, top = p.y - box.top - 20;
   if (left + 260 > box.width) left = p.x - box.left - 268;
   tip.style.left = Math.max(8, left) + "px"; tip.style.top = Math.max(8, Math.min(top, box.height - 150)) + "px";
@@ -563,6 +584,7 @@ function renderRight(){
   if (!list.length){ $("detail").innerHTML = `<h3>Closest to you</h3><div class="empty">Companies appear here as the agent finds them, ranked by how similar they are to your idea.</div>`; return; }
   const par = list.filter(u => u.kind !== "inspiration").sort((a, b) => similarity(b) - similarity(a));
   const ins = list.filter(u => u.kind === "inspiration");
+  const col = par.filter(u => u.relationship === "collaborator"), rest = par.filter(u => u.relationship !== "collaborator");
   const row = u => {
     const sim = similarity(u); const st = STATUS[u.status];
     return `<div class="rank ${fn(u) ? "" : "dim"}" data-id="${u.id}">
@@ -571,9 +593,10 @@ function renderRight(){
       ${sim != null ? `<div class="bar"><i style="width:${sim}%"></i></div>` : ""}
       <div class="sub">${dna(u)} &nbsp;${st ? `<span style="color:${st[1]}">${st[0]}</span> · ` : ""}${esc(u.divergence_summary)}</div></div>`;
   };
-  $("detail").innerHTML = `<h3>Closest to you</h3>${par.map(row).join("")}
-    ${ins.length ? `<h3>Same concept, other industries</h3>${ins.map(row).join("")}` : ""}
-    <div class="empty" style="font-size:12px"><span class="dna"><i></i></span> gold = same choice as you &nbsp;<span class="dna"><i class="diff"></i></span> = done differently</div>`;
+  $("detail").innerHTML = `${ins.length ? `<h3>Inspirations · other industries</h3>${ins.map(row).join("")}` : ""}
+    ${col.length ? `<h3>Possible collaborators</h3>${col.map(row).join("")}` : ""}
+    ${rest.length ? `<h3>Others in your space</h3>${rest.map(row).join("")}` : ""}
+    <div class="empty" style="font-size:12px;margin-top:8px"><span class="dna"><i></i></span> gold = same choice as you &nbsp;<span class="dna"><i class="diff"></i></span> = done differently</div>`;
   document.querySelectorAll(".rank").forEach(r => {
     r.onclick = () => select(r.dataset.id);
     r.onmouseenter = () => hover(r.dataset.id, true); r.onmouseleave = () => hover(r.dataset.id, false);
@@ -581,10 +604,10 @@ function renderRight(){
 }
 function gauge(pct, color){
   const r = 30, c = 2 * Math.PI * r, off = c * (1 - pct / 100);
-  return `<svg class="gauge" width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#1e2236" stroke-width="6"/>
+  return `<svg class="gauge" width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="${r}" fill="none" stroke="#232323" stroke-width="6"/>
     <circle cx="38" cy="38" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" transform="rotate(-90 38 38)">
     <animate attributeName="stroke-dashoffset" from="${c}" to="${off}" dur=".9s" fill="freeze" calcMode="spline" keySplines=".2 .8 .2 1" keyTimes="0;1"/></circle>
-    <text x="38" y="42" text-anchor="middle" fill="#eceef7" font-size="15" font-weight="600">${pct}%</text></svg>`;
+    <text x="38" y="42" text-anchor="middle" fill="#eeeeee" font-size="15" font-weight="600">${pct}%</text></svg>`;
 }
 function select(id){
   const u = S.u[id]; if (!u) return;
@@ -607,7 +630,8 @@ function renderDetail(u){
   const yours = S.core ? S.core.user_execution : {};
   const sim = similarity(u); const st = STATUS[u.status];
   const rel = u.kind === "inspiration" ? `Other industry · ${u.industry}` : u.relationship === "competitor" ? "Direct competitor" : "Possible partner";
-  const take = u.kind === "inspiration" && u.transfer ? ["What you could borrow", u.transfer] : ["The lesson for you", u.lesson];
+  const take = u.kind === "inspiration" && u.transfer ? ["What you could borrow", u.transfer]
+    : u.relationship === "collaborator" && u.relationship_reason ? ["How you could team up", u.relationship_reason] : ["The lesson for you", u.lesson];
   const nDiff = (u.divergent_axes || []).length;
   const receipt = u.receipt_url || u.source_url;
   $("detail").innerHTML = `<div class="fadein">
@@ -620,7 +644,7 @@ function renderDetail(u){
         <span class="tag">${st ? `<span style="color:${st[1]}">● ${st[0]}</span>` : "Checking if alive…"}</span>
       </div>
     </div>
-    <div class="card" style="${u.kind === "inspiration" ? "border-color:#3a2d60" : ""}"><div class="takeaway"><small>${take[0]}</small>${esc(take[1])}</div></div>
+    <div class="card" style="${u.kind === "inspiration" ? "border-color:#333333" : ""}"><div class="takeaway"><small>${take[0]}</small>${esc(take[1])}</div></div>
 
     <details class="sec" open><summary>Where they split from you<span class="hint">${nDiff} of 5 choices differ</span></summary><div>
       <div style="margin-bottom:10px">${esc(u.divergence_summary)}</div>
@@ -693,6 +717,11 @@ const CARDS = [
   ["Shoebox","Shut down · 2025","churn without in-person support","78%","66%","rotateY(-22deg) rotateZ(-7deg)","var(--dead)"],
 ];
 $("cards").innerHTML = CARDS.map(([n,k,q,x,y,t,c],i) => `<div class="pc" style="left:${x};top:${y};--t:${t};animation-delay:-${i*3}s"><i style="color:${c}">${k}</i><b>${n}</b><q>${q}</q></div>`).join("");
+$("stage").addEventListener("mousemove", e => {
+  if (!document.body.classList.contains("running")) return;
+  const r = $("stage").getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+  $("board").style.setProperty("--ry", (x * 6).toFixed(2) + "deg"); $("board").style.setProperty("--rx", (-y * 5).toFixed(2) + "deg");
+});
 drawStars(); reset(); loadDemos();
 </script>
 </body>
