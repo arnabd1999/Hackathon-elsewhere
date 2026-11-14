@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import llm
 import prompts
 import you
-from verify import name_on_page
+from verify import _squash, name_on_page
 
 
 def _domain(url: str) -> str:
@@ -18,7 +18,10 @@ def relevant(results: list[dict], name: str, website: str) -> list[dict]:
     for r in results:
         text = " ".join([r.get("title") or "", r.get("description") or "",
                          *[s for s in (r.get("snippets") or []) if isinstance(s, str)]])
-        if name_on_page(name, text) or (site and _domain(r.get("url")) == site):
+        by_site = bool(site) and _domain(r.get("url")) == site
+        by_url = (not site and len(_squash(name)) >= 4
+                  and _squash(name) in _squash(r.get("url") or ""))
+        if name_on_page(name, text) or by_site or by_url:
             keep.append(r)
     return keep
 

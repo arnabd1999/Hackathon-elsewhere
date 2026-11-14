@@ -1,6 +1,7 @@
 """Receipts: check that a quote the LLM claims came from a page actually appears in that page."""
 import html
 import re
+import unicodedata
 import urllib.parse
 
 _TRANS = str.maketrans({"\u2019": "'", "\u2018": "'", "\u201c": '"', "\u201d": '"',
@@ -42,10 +43,13 @@ def verify_quote(quote: str, page_text: str) -> str:
         frags = [f for f in (_norm(f) for f in _fragments(quote)) if len(f.split()) >= 4]
         if not frags:
             return "unverified"
-        found = sum(1 for f in frags if f.strip(' ."\'') in p)
-        if found == len(frags):
+        scores = []
+        for f in frags:
+            r = _check_one(f, p)
+            scores.append(1.0 if r is True else 0.5 if r >= 0.6 else 0.0)
+        if all(x == 1.0 for x in scores):
             return "verified"
-        return "partial" if found * 2 >= len(frags) and found > 0 else "unverified"
+        return "partial" if sum(scores) * 2 >= len(frags) else "unverified"
     q = _norm(quote)
     if len(q) < 20:
         return "unverified"
@@ -55,18 +59,36 @@ def verify_quote(quote: str, page_text: str) -> str:
     return "partial" if r >= 0.6 else "unverified"
 
 
+def _fold(s: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
+
+
 def _alnum(s: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[^\w]+", " ", _norm(s))).strip()
+    return re.sub(r"\s+", " ", re.sub(r"[^\w]+", " ", _fold(_norm(s)))).strip()
+
+
+_SUFFIXES = {"inc", "llc", "ltd", "corp", "co", "gmbh", "plc"}
+
+
+def _squash(s: str) -> str:
+    return _alnum(s).replace(" ", "")
 
 
 def name_on_page(name: str, page_text: str) -> bool:
     n, p = _alnum(name), _alnum(page_text)
+    words = n.split()
+    while len(words) > 1 and words[-1] in _SUFFIXES:
+        words.pop()
+    n = " ".join(words)
     if len(n) < 2 or not p:
         return False
     if re.search(r"(?<!\w)" + re.escape(n) + r"(?!\w)", p):
         return True
-    if " " in n:
-        return n.replace(" ", "") in p.replace(" ", "")
+    sq = n.replace(" ", "")
+    if len(sq) >= 4 and sq in p.replace(" ", ""):
+        return True
+    if 2 <= len(sq) <= 5 and sq.isalpha() and " " not in n:  # dotted acronym: I.B.M.
+        return re.search(r"(?<!\w)" + r"\s".join(sq) + r"(?!\w)", p) is not None
     return False
 
 
@@ -74,8 +96,11 @@ def receipt_url(source_url: str, quote: str) -> str | None:
     """Source URL with a text-fragment that makes the browser highlight the quote."""
     if not source_url or len(_norm(quote)) < 20:
         return None
-    frags = _fragments(quote)
-    words = (frags[0] if frags else quote).split()
+    clean = html.unescape(quote)
+    clean = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", clean)
+    clean = re.sub(r"[*_`]", "", clean)
+    frags = _fragments(clean)
+    words = (max(frags, key=lambda f: len(f.split())) if frags else clean).split()
     enc = lambda s: urllib.parse.quote(s, safe="").replace("-", "%2D")  # noqa: E731
     if len(words) <= 10:
         frag = enc(" ".join(words))

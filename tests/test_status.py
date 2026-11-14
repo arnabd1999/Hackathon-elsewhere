@@ -19,6 +19,10 @@ class Relevant(unittest.TestCase):
         r = R("https://www.acmefoods.com/blog", "Our update")
         self.assertEqual(status.relevant([r], "Acme Foods", "https://acmefoods.com"), [r])
 
+    def test_url_squash_when_no_website(self):
+        r = R("https://hello-fresh.com/x", "Meals")
+        self.assertEqual(status.relevant([r], "HelloFresh", ""), [r])
+
     def test_drops_other_company(self):
         r = R("https://news.example/b", "Zenith Groceries launches app", "A food delivery startup")
         self.assertEqual(status.relevant([r], "Acme Foods", "https://acmefoods.com"), [])

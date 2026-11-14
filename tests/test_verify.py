@@ -38,6 +38,13 @@ class VerifyQuote(unittest.TestCase):
         self.assertEqual(verify_quote("Completely different words appear right here … and nothing else matches the page at all", PAGE), "unverified")
 
 
+class EllipsisPartial(unittest.TestCase):
+    def test_changed_word_partial(self):
+        page = "We help small farmers in Kenya sell produce directly to restaurants via SMS every day."
+        q = "We help small farmers in Kenya sell produce directly to restaurants via SMS every week \u2026"
+        self.assertEqual(verify_quote(q, page), "partial")
+
+
 class NameOnPage(unittest.TestCase):
     def test_case_and_punct(self):
         self.assertTrue(name_on_page("Acme Foods", "...ACME, foods inc..."))
@@ -47,6 +54,14 @@ class NameOnPage(unittest.TestCase):
 
     def test_absent(self):
         self.assertFalse(name_on_page("Zed", "nothing"))
+
+    def test_tolerant(self):
+        for n, p in [("Acme, Inc.", "We at Acme build"), ("HelloFresh", "Hello Fresh meals"),
+                     ("Caf\u00e9 Nero", "cafe nero"), ("IBM", "I.B.M. said")]:
+            self.assertTrue(name_on_page(n, p), n)
+
+    def test_tiny_name_boundary(self):
+        self.assertFalse(name_on_page("Zed", "Zeddy"))
 
     def test_short(self):
         self.assertFalse(name_on_page("A", "a a a"))
@@ -82,6 +97,11 @@ class ReceiptUrl(unittest.TestCase):
                             "nine%20ten%20%26%20eleven%20%23twelve")
         self.assertEqual(u.count("#"), 1)
         self.assertNotIn("old", u)
+
+    def test_longest_fragment_and_clean(self):
+        q = "Short bit here ok \u2026 We **help** [small farmers](http://a.b) sell produce"
+        self.assertEqual(receipt_url("https://x.y", q),
+                         "https://x.y#:~:text=We%20help%20small%20farmers%20sell%20produce")
 
     def test_dash_encoded(self):
         u = receipt_url("https://x.y/p", "Alpha-beta gamma delta epsilon zeta eta theta iota kappa lambda mu")
