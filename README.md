@@ -1,72 +1,85 @@
-# Elsewhere: the multiverse of your idea
+# Elsewhere 🪐
 
-**One line:** Your problem isn't as new as you think. It's been solved elsewhere. Describe your idea, and Elsewhere finds the real companies that already solved a version of it, both in your industry (done differently) and in completely different industries (same core concept). It checks whether each is alive *today* and shows a receipt for every claim.
+**Every pitch is "X for Y." Elsewhere finds every X on the live web, in your industry and far outside it, tells you which are alive today, and shows a receipt for every claim.**
 
-**Who it's for:** founders in the ideation phase who get stuck searching only their own industry. Elsewhere surfaces inspirations (borrow their playbook), collaborators (non-overlapping markets) and lessons (the versions that died).
+Built in one day at **Ground Truth: The Live Agents Hackathon** (You.com × The Builder Series × localhost:nyc). Track: **The Analyst**.
 
-**Track:** The Analyst (founder and VC diligence), with Receipts built in.
+---
 
-## Why this needs a live-web agent
-Your idea probably already exists, executed a little differently: another country, another customer, another business model. Those "parallel universes" are the best evidence a founder can get, because each is a natural experiment on one decision. But it only works with today's data. Which versions raised money this quarter, which pivoted, and which quietly shut down last month? A model trained last year can't know, and it will invent companies to fill the gap. Elsewhere only shows companies it found on the live web, with a verbatim quote matched against the source page.
+## The problem
 
-## How it works (the You.com API is the engine)
-| Step | What happens | You.com endpoint |
+Your idea isn't new. Somewhere (another country, another customer, another industry) someone has already tried it. Some of those versions are thriving. Some quietly died last month. Together they're the best evidence a founder or investor can get, because each one is a natural experiment on a single decision.
+
+Today, finding them is slow and unreliable:
+
+- **VCs** ask the same first diligence question of every pitch: *who else tried this, and what happened to them?* An associate spends days answering it.
+- **Founders** search only their own industry, so they miss the playbooks, partners and failures that would have saved them months.
+- **Databases** match by category. They miss the same idea in a different industry, and they're slow to show who pivoted or shut down.
+- **LLMs** are frozen at their training date. They can't know who raised, pivoted or died this quarter, so they make companies up.
+
+## What Elsewhere does
+
+Describe an idea in one line. In about 4 minutes, Elsewhere:
+
+1. **Abstracts** it to its *core concept* and records how you execute it on 5 axes: customer, geography, business model, technology, channel.
+2. **Diverges** by searching the live web through 5 lenses: the same idea executed differently, **other industries** using the same core concept, startup graveyards and post-mortems, Reddit (the tools people actually use), and launch sites (Product Hunt, YC).
+3. **Reads** the best pages live and extracts each company, how it differs from you, and a verbatim quote.
+4. **Verifies** each quote in code by string-matching it against the page it came from: *verified*, *partial* or *unverified*. Unverified claims stay visible but faded, never hidden and never trusted.
+5. **Checks who's alive today**: past-year news per company, then a status of *thriving*, *active*, *pivoted* or *shut down*. The signal must link to a page we actually retrieved, and conflicting sources are flagged.
+6. **Deep dive**: "Why did this one die?" returns a cited You.com Research answer.
+
+### The map
+- **Your idea is the sun.** Inner rings are your industry, ordered by how many execution choices differ from yours.
+- **Elsewhere tab:** other industries running the same core concept.
+- **World tab:** a globe of where the idea already works.
+- **Graveyard tab:** the versions that died, and the lessons.
+- Colors: possible **collaborator** (non-overlapping market), direct **competitor**, **shut down**. A pulsing ring means momentum this year.
+
+## How we use the You.com API (the engine, not an add-on)
+
+| Step | You.com endpoint | What it powers |
 |---|---|---|
-| 1. Abstract | LLM strips the idea to its **core idea** and records your execution on 5 axes: customer, geography, business model, technology, channel | – |
-| 2. Diverge | ~14 searches in parallel, through 5 lenses: same idea / other execution; **other industries** with the same core concept; **startup graveyards** (Failory, post-mortems); **Reddit** (tools people actually use); **launches** (Product Hunt, YC directory) via `site:` operators | **Search** `POST ydc-index.io/v1/search` |
-| 3. Read | Top pages from different domains, crawled live | **Contents** `POST ydc-index.io/v1/contents` |
-| 4. Extract + verify | LLM pulls out companies, their execution and a verbatim quote. **Code** string-matches the quote against the page: verified / partial / unverified. Unverified planets are faded, never hidden | – |
-| 5. Alive today? | Per company: past-year news search, then status (thriving / active / pivoted / shut down). The signal URL must be one we actually retrieved, and conflicting sources are flagged | **Search** with `freshness=year` |
-| (stretch) Deep dive | "Why did this universe die?" button | **Research** `POST api.you.com/v1/research` |
+| Diverge | **Search** `POST ydc-index.io/v1/search` | ~14 parallel searches across 5 lenses, using `site:` operators for graveyards, Reddit, Product Hunt and YC |
+| Read | **Contents** `POST ydc-index.io/v1/contents` | Live crawl of the top pages (markdown), which is the ground truth every quote is checked against |
+| Alive today? | **Search** with `freshness=year` | Fresh news per company → thriving / active / pivoted / shut down, with a dated source |
+| Deep dive | **Research** `POST api.you.com/v1/research` | Cited answer to "why did this version succeed or fail?" |
+| Reasoning (optional) | **Research** as the model (`LLM_PROVIDER=you`) | Extraction and classification run on You.com Research, restricted to the domains we already read, so the whole agent can run on one You.com key |
 
-**The map:** your idea is the sun. The inner rings are your industry, ordered by how many execution choices differ. The purple outer band is **Elsewhere**: other industries using the same core concept. Teal means a possible collaborator (non-overlapping market), coral means a direct competitor, and grey means shut down (a lesson). A pulsing ring means momentum this year.
+Take You.com out and there's no product: every company, status and quote on the map comes from a page the agent retrieved live.
+
+## Why it only works on the live web
+"Is this company alive today?" can't be answered from training data. And the main way LLMs fail at this task is inventing companies, which is exactly what our receipt check catches on screen.
+
+## Business
+- **Founders and accelerators (wedge):** first map free, then $29/mo. Validate before you build, and find partners in non-overlapping markets.
+- **VC teams (revenue):** $299/seat/mo for **watchlists** that alert you when any version of a portfolio company or pipeline deal raises, pivots or shuts down. Recurring, live, and impossible without a live-web agent.
+- **Why not Crunchbase's "similar companies"?** They match by category. We match by *core idea*, show *which decision differs*, show *how each version is doing right now*, and cite every claim.
 
 ## Run it
+
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # add YDC_API_KEY + an LLM key
+cp .env.example .env    # add YDC_API_KEY (+ an LLM key, or set LLM_PROVIDER=you)
 uvicorn server:app --reload --port 8000
 # open http://localhost:8000
 ```
-Every live run is recorded in `cache/`, and the **Replay** dropdown replays it with real timing. **Record 2 great runs before demo time**, so a slow conference Wi-Fi can't kill the demo. Still show at least one live run, because judges score "works live".
 
-## OpenCrawl (required): set up in the first 15 minutes, all 4 laptops
-OpenCrawl lets our coding agents search each other's sessions and post to a shared board, so 4 people plus 4 agents don't step on each other.
-```bash
-npm i -g @getopencrawl/cli@next
-opencrawl login --api https://app.getopencrawl.com --json
-opencrawl collect install --yes --backfill skip --api https://app.getopencrawl.com --json
-opencrawl skills install --api https://app.getopencrawl.com --json
-# add MCP server to your coding agent: https://app.getopencrawl.com/mcp
-```
-**Team protocol:** each agent posts to the board when it starts or finishes a file ("A: owns prompts.py, changed EXTRACT schema, added field X"). Before changing a shared contract (the event schema in `pipeline.py`), search the board first. Screenshot the board for the demo video and Devpost, since that's the evidence for "Best use of OpenCrawl".
+Every live run is saved to `cache/`, and the **Replay** menu plays it back with real timing.
 
-## Team split (4 people)
-| Who | Owns | First hour | Then |
-|---|---|---|---|
-| **A: Agent / prompts** | `prompts.py`, `pipeline.py` | Get keys, run 3 real ideas, fix prompts until matches are true parallel universes (not same-category noise) | Research API "deep dive" endpoint |
-| **B: Receipts** | `verify.py`, status step | Check verification rates on real pages and tune the matcher | Conflicting-source handling, "shut down" detection quality |
-| **C: Frontend** | `static/index.html` | Make it beautiful on replayed runs (no API cost) | Filters (show only collaborators / dead), share link, mobile |
-| **D: Product + story** | README, Devpost, video, LinkedIn | Pick 2 demo ideas, write pitch and business model | Record demo video by 3:15, post LinkedIn, submit by 3:45 |
+Tests: `python -m pytest -q`
 
-## Timeline (deadline 4:00 PM)
-- **12:15** OpenCrawl on all laptops, keys in `.env`, first live run
-- **1:00** Lunch. Real results for 3 ideas, prompts tuned
-- **2:00** UI polished, status signals solid, 2 demo runs recorded
-- **2:45** Feature freeze. Only bug fixes after this
-- **3:15** Demo video recorded (1–3 min)
-- **3:45** Devpost submitted (public GitHub repo link required), LinkedIn post live
+## Code map
+| File | Role |
+|---|---|
+| `pipeline.py` | Agent loop: abstract → diverge → read → extract → verify → status, streamed to the UI as events |
+| `you.py` | You.com Search, Contents and Research client |
+| `llm.py` | Provider-agnostic JSON completion (OpenAI, Anthropic or You.com Research) |
+| `prompts.py` | Abstraction, extraction and status prompts |
+| `verify.py` | Quote-vs-page matcher (the receipts) |
+| `status.py` | Alive-today classification and conflicting-source handling |
+| `server.py` | FastAPI: `/api/explore` (SSE), `/api/replay`, `/api/demos`, `/api/deep-dive` |
+| `static/` | The solar-system map, globe and graveyard UI |
 
-## Business
-- **Customer:** pre-seed founders and accelerators (validation before building), and VC associates (market maps in diligence).
-- **Money:** free first map, then $29/mo for founders; $299/mo per seat for VC teams with **watchlists** (alerts when a parallel universe raises, pivots or dies). That's the Live Wire hook and the recurring revenue.
-- **Why not Crunchbase "similar companies":** those match by category. We match by *core idea*, show *which decision differs*, and show *how each version is doing right now*, with receipts.
-
-## Demo script (2 min)
-1. "Every idea already exists somewhere, executed differently. Those versions are the best evidence a founder has, but LLMs can't tell you which are alive today, and they invent companies."
-2. Type an idea live. Point at the core idea and your 5 execution choices.
-3. Planets stream in. Click a **teal** one: "same idea, different country; a partner, not a threat." Show the verified quote and the dated news signal.
-4. Click a **grey** one: "this version shut down in 2025. Here's the source. That's a lesson you got in 4 minutes."
-5. Point at a **faded** planet: "the model claimed this one, and our verifier couldn't find the quote, so we don't trust it."
-6. Business slide: watchlists for VCs.
+## How we built it
+Four people and four coding agents built this in one day, coordinated through **OpenCrawl**. Each agent posted to a shared board when it took or finished a file, and searched the board before changing a shared contract such as the pipeline's event schema.
