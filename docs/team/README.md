@@ -30,4 +30,5 @@ npm run dev                  # http://localhost:3000
 - **`lib/types.ts` is the shared contract.** Don't change it without telling everyone (post on the OpenCrawl board too).
 - **Never commit `.env.local`** or any key. The repo is public.
 - **OpenCrawl:** keep your coding agent registered on the team's OpenCrawl board with your role as its task. Post there when you merge to `main`, change `lib/types.ts`, or are blocked. This is also how we compete for "Best use of OpenCrawl."
+- **Next.js 16 gotcha:** `next.config.ts` has `cacheComponents: true` (the new default). A page that reads `searchParams` or fetches dynamic data must wrap that part in `<Suspense>` (or be a client component using `useSearchParams()` inside `<Suspense>`), or `npm run build` fails. Check `node_modules/next/dist/docs/` when an API looks different from what your agent expects.
 - **Build UI against fake data:** `POST /api/explore` streams `public/demo/fixture.json` until role 1 replaces it with the real pipeline. Read events with `readEvents()` from `lib/ndjson.ts`.
