@@ -12,7 +12,7 @@ Two kinds of matches exist:
 
 Return JSON:
 {
-  "founder_industry": "the founder's own industry, 1-3 words (e.g. 'food retail')",
+  "founder_industry": "the founder's own industry, 1-2 words, Title Case (e.g. 'Food Retail')",
   "core_idea": "one sentence stating the underlying idea with every execution choice removed",
   "core_mechanism": "the abstract concept underneath, with the industry removed, e.g. 'match perishable supply to last-minute demand'",
   "user_execution": {"customer": "...", "geography": "...", "business_model": "...",
@@ -39,12 +39,12 @@ Return JSON: {"companies": [ ... up to 3 ... ]}. Each company:
 {
   "name": "company or product name",
   "kind": "parallel | inspiration",
-  "industry": "their industry, 1-3 words",
-  "transfer": "for inspiration: what exactly the founder could borrow from them, 20 words max; else empty",
+  "industry": "THEIR OWN industry (not the founder's), 1-2 words, Title Case, e.g. \"Airlines\", \"Food Retail\", \"Fintech\"",
+  "transfer": "for inspiration: ONE sentence on what exactly the founder could borrow from them, 20 words max; else empty",
   "website": "their homepage if visible on the page, else empty string",
   "one_liner": "what they do, 15 words max",
   "evidence_quote": "ONE sentence copied EXACTLY, character for character, from the page text, that shows they pursue the core idea",
-  "execution": {"customer": "...", "geography": "...", "business_model": "...", "technology": "...", "channel": "..."},
+  "execution": {"customer": "...", "geography": "a real city or country, e.g. \"Nairobi\" or \"India\"", "business_model": "...", "technology": "...", "channel": "..."},
   "divergent_axes": ["axis names where their execution clearly differs from the founder's"],
   "divergence_summary": "Same idea, but <the key difference>. 20 words max.",
   "lesson": "one concrete thing the founder can learn from how this company executed it",
@@ -64,7 +64,11 @@ Rules:
 - For "inspiration", "transfer" must name a concrete practice the founder could copy; if you can't, skip it.
 - For a post-mortem page about a dead startup, include that startup; for a Reddit thread, include tools people say they use.
 - evidence_quote MUST be verbatim from the page. It will be string-matched against the page; invented quotes are discarded.
-- Write "unknown" for an execution axis the page doesn't support. Don't guess.
+- industry: use the plainest common name, 1-2 words, Title Case, and the SAME spelling every time
+  ("Food Retail", never "food retail" or "Grocery Retail Tech"). For parallel companies use the founder's industry.
+- geography: the city or country where they are based or mainly operate. If they operate online or worldwide,
+  give their headquarters country. Never "global", "online" or "worldwide"; "unknown" only if the page gives no place.
+- Write "unknown" for any other execution axis the page doesn't support. Don't guess.
 - relationship = "competitor" when they serve the same customer in the same geography; otherwise "collaborator"
   (non-overlapping markets can partner, license, share playbooks or co-expand).
 - Never list the founder's own company."""

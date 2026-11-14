@@ -118,8 +118,40 @@ def resource_page(page: dict, c: dict, sources: list[dict]) -> dict:
     return page
 
 
+# ---- Field hygiene for the UI (it clusters by exact industry string and geocodes geography) ----
+_NOT_A_PLACE = {"", "global", "globally", "online", "worldwide", "international", "internationally",
+                "unspecified", "unknown", "n/a", "na", "various", "multiple", "remote", "everywhere"}
+_CODE_LIKE = re.compile(r"[{}<>=;\[\]]|\(\)|\.\w+\(|^\W|https?://")
+
+
+def title_industry(s: str) -> str:
+    """'food retail' -> 'Food Retail'; keeps words with inner capitals (SaaS, AI, B2B) as written."""
+    words = re.sub(r"\s+", " ", (s or "").replace("_", " ")).strip(" .,-").split(" ")
+    out = [w if any(ch.isupper() for ch in w[1:]) else w[:1].upper() + w[1:].lower() for w in words if w]
+    return " ".join(out)
+
+
+def clean_geography(s: str) -> str:
+    g = re.sub(r"\s+", " ", str(s or "")).strip(" .,")
+    return "unknown" if g.lower() in _NOT_A_PLACE else g
+
+
+def valid_name(name: str) -> bool:
+    """Rejects extraction garbage such as 'console.text()' or a URL as a company name."""
+    n = (name or "").strip()
+    return 2 <= len(n) <= 60 and any(ch.isalpha() for ch in n) and not _CODE_LIKE.search(n)
+
+
 def _build_universe(page: dict, c: dict, core: dict) -> dict:
     theirs = {a: str((c.get("execution") or {}).get(a, "unknown")) for a in AXES}
+    theirs["geography"] = clean_geography(theirs["geography"])
+    kind = "inspiration" if c.get("kind") == "inspiration" or page.get("lens") == "cross" else "parallel"
+    industry = title_industry(c.get("industry", ""))
+    if kind == "parallel" and core.get("founder_industry"):
+        industry = title_industry(core["founder_industry"])  # near-twins share the founder's industry
+    transfer = (c.get("transfer") or "").strip()
+    if kind == "inspiration" and not transfer:
+        transfer = (c.get("lesson") or c.get("divergence_summary") or "").strip()
     div = [a for a in (c.get("divergent_axes") or []) if a in AXES]
     md = page.get("markdown") or ""
     quote_repaired = False
@@ -149,9 +181,9 @@ def _build_universe(page: dict, c: dict, core: dict) -> dict:
         "lesson": c.get("lesson", ""),
         "relationship": c.get("relationship", "collaborator"),
         # Pages found by an other-industry search are inspirations by construction.
-        "kind": "inspiration" if c.get("kind") == "inspiration" or page.get("lens") == "cross" else "parallel",
-        "industry": c.get("industry", ""),
-        "transfer": c.get("transfer", ""),
+        "kind": kind,
+        "industry": industry or "Other",
+        "transfer": transfer,
         "lens": page.get("lens", "parallel"),
         "lens_label": page.get("lens_label", "Web"),
         "relationship_reason": c.get("relationship_reason", ""),
@@ -231,13 +263,18 @@ async def explore(idea: str):
 
         closer = asyncio.create_task(close_when_done())
         found: dict[str, dict] = {}
+        industry_names: dict[str, str] = {}
         status_tasks = []
         while (item := await queue.get()) is not None:
             page, c = item
+            if not valid_name(c["name"]):
+                continue
             k = _key(c["name"])
             if not k or k in found:
                 continue
             u = _build_universe(page, c, core)
+            # One spelling per industry across the whole run (the UI groups by the exact string).
+            u["industry"] = industry_names.setdefault(_key(u["industry"]), u["industry"])
             found[k] = u
             yield {"type": "universe", **u}
             status_tasks.append(asyncio.create_task(status.check_status(client, sem, u)))
