@@ -42,7 +42,7 @@ uvicorn server:app --reload --port 8000
 ```
 `LLM_PROVIDER=you` uses the You.com Research API as the model, so a single You.com key runs everything. An OpenAI-compatible or Anthropic key also works (see `.env.example`). Tests: `python -m pytest -q` (or `python -m unittest discover -s tests`).
 
-**Deploy:** `render.yaml` is a Render Blueprint (one Python web service). Enter `YDC_API_KEY` in Render's dashboard, never in the repo. Public-deploy guards: `LIVE_RUNS_PER_HOUR`, `DEEP_DIVES_PER_HOUR`, and `RECORD_RUNS=0` so visitors' ideas aren't added to the public Replay list.
+**Deploy:** `render.yaml` is a Render Blueprint (one Python web service). Enter `YDC_API_KEY` in Render's dashboard, never in the repo. Public-deploy guards: `LIVE_RUNS_PER_HOUR`, `DEEP_DIVES_PER_HOUR`, and `RECORD_RUNS=0` so visitors' ideas aren't added to the public Replay list. If You.com answers 402 (credits used up), the site shows visitors a friendly "live runs are paused" message and makes no paid calls for `CREDIT_PAUSE_SECONDS` (default 3600); replays keep working. Set `LIVE_RUNS=off` in Render's Environment tab to make the site replay-only. Note: `LIVE_RUNS_PER_HOUR=0` means *unlimited*, not off.
 Every live run is recorded in `cache/`, and the **Replay** dropdown replays it with real timing. **Record 2 great runs before demo time**, so a slow conference Wi-Fi can't kill the demo. Still show at least one live run, because judges score "works live".
 
 ## Built with OpenCrawl

@@ -65,6 +65,49 @@ class HourlyCap:
 explore_cap = HourlyCap(LIVE_RUNS_PER_HOUR)
 deep_dive_cap = HourlyCap(DEEP_DIVES_PER_HOUR)
 
+# Kill switch: LIVE_RUNS=off makes the public site replay-only (no paid calls at all).
+LIVE_RUNS_ENABLED = os.getenv("LIVE_RUNS", "on").strip().lower() not in ("off", "0", "false", "no")
+# When You.com answers 402 (credits used up), stop paid calls for this long instead of failing every visitor.
+CREDIT_PAUSE_SECONDS = int(os.getenv("CREDIT_PAUSE_SECONDS", "3600"))
+OFF_MSG = ("Live runs are switched off on this demo. Pick a recorded run from Replay, "
+           "or watch the demo video on our GitHub page.")
+PAUSED_MSG = ("Live runs are paused right now: this demo's free search credits are used up. "
+              "Pick a recorded run from Replay, or watch the demo video on our GitHub page.")
+_CREDIT_ERR = re.compile(r"(failed|LLM\)) 402\b|payment_required|credit balance", re.IGNORECASE)
+
+
+def is_out_of_credits(e: BaseException) -> bool:
+    """True for You.com's 402 / 'credit balance depleted' errors, however the pipeline wrapped them."""
+    return bool(_CREDIT_ERR.search(str(e)))
+
+
+class CreditPause:
+    """Per-process: after a 402, refuse paid calls until the pause runs out (credits may be topped up)."""
+
+    def __init__(self):
+        self.until = 0.0
+
+    def start(self, now: float | None = None):
+        self.until = (time.time() if now is None else now) + CREDIT_PAUSE_SECONDS
+
+    def active(self, now: float | None = None) -> bool:
+        return (time.time() if now is None else now) < self.until
+
+    def clear(self):
+        self.until = 0.0
+
+
+credit_pause = CreditPause()
+
+
+def _live_refusal() -> str | None:
+    """Message to show instead of a paid call, or None when paid calls are allowed."""
+    if not LIVE_RUNS_ENABLED:
+        return OFF_MSG
+    if credit_pause.active():
+        return PAUSED_MSG
+    return None
+
 app = FastAPI(title="Elsewhere")
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
@@ -84,6 +127,11 @@ def index():
 
 @app.get("/api/explore")
 async def api_explore(idea: str):
+    refusal = _live_refusal()  # checked before the cap, so a refused run doesn't use up a slot
+    if refusal:
+        async def refused():
+            yield _sse({"type": "error", "msg": refusal})
+        return StreamingResponse(refused(), media_type="text/event-stream", headers=SSE_HEADERS)
     if not explore_cap.allow():
         async def capped():
             yield _sse({"type": "error", "msg": "The live demo has hit its hourly limit of live runs. "
@@ -103,7 +151,11 @@ async def api_explore(idea: str):
                 events.append({"t": time.time(), "ev": ev})
                 yield _sse(ev)
         except Exception as e:  # noqa: BLE001
-            ev = {"type": "error", "msg": str(e)}
+            if is_out_of_credits(e):
+                credit_pause.start()
+                ev = {"type": "error", "msg": PAUSED_MSG}
+            else:
+                ev = {"type": "error", "msg": str(e)}
             events.append({"t": time.time(), "ev": ev})
             yield _sse(ev)
         finally:
@@ -227,6 +279,9 @@ class DeepDiveReq(BaseModel):
 @app.post("/api/deep-dive")
 async def deep_dive(req: DeepDiveReq):
     """Cited You.com Research answer on why one company succeeded or failed."""
+    refusal = _live_refusal()
+    if refusal:
+        raise HTTPException(503, refusal)
     if not deep_dive_cap.allow():
         raise HTTPException(429, "Deep dives have hit their hourly limit on this demo; try again later.")
     facts = [f"{k}: {v}" for k, v in (("one-liner", req.one_liner), ("website", req.website),
@@ -244,7 +299,10 @@ async def deep_dive(req: DeepDiveReq):
         sources = [{"title": s.get("title") or s["url"], "url": s["url"]}
                    for s in (out.get("sources") or []) if isinstance(s, dict) and s.get("url")][:8]
         return {"summary": out.get("content") or "", "sources": sources}
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
+        if is_out_of_credits(e):
+            credit_pause.start()
+            raise HTTPException(503, PAUSED_MSG) from None
         raise HTTPException(502, "Research service failed; try again.") from None
 
 

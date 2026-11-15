@@ -16,6 +16,8 @@ services:
         value: you        # You.com Research as the model; only YDC_API_KEY needed
       - key: LIVE_RUNS_PER_HOUR
         value: "20"       # each live run costs ~$0.40 of You.com credits; replays are free
+      # LIVE_RUNS: set to "off" in the dashboard to make the site replay-only (0 above would mean unlimited).
+      # On a You.com 402 the server pauses paid calls for CREDIT_PAUSE_SECONDS (default 3600) by itself.
       - key: DEEP_DIVES_PER_HOUR
         value: "30"
       - key: RECORD_RUNS
