@@ -9,6 +9,12 @@
 
 **Live demo:** https://elsewhere-8t65.onrender.com (free hosting: the first load after 15 idle minutes takes ~30 s to wake up). Pick a run from **Replay** for an instant, free walkthrough, or type your own idea for a live run (capped at 20 live runs per hour).
 
+**Demo video (40 s):**
+
+https://github.com/user-attachments/assets/e9916f03-35e9-4744-b863-5d03d0f2306d
+
+Also on YouTube: https://youtu.be/t6nW4qDTuVg
+
 **Receipts, honestly counted:** across our two recorded demo runs, 82% of company quotes (28 of 34) are found verbatim on the source page. When the model's quote isn't on the page, we show the page's own sentence about the company and label it **partial**, never verified.
 
 ## Why this needs a live-web agent
